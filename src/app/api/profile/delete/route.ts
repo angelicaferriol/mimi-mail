@@ -1,0 +1,29 @@
+import { NextResponse } from 'next/server';
+import db from '@/lib/db';
+import { getSession, clearSession } from '@/lib/auth';
+
+export async function POST() {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Delete user from database (this will cascade delete all their messages)
+    db.prepare('DELETE FROM users WHERE id = ?').run(session.userId);
+
+    // Clear user session cookie
+    await clearSession();
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Account deletion error:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}

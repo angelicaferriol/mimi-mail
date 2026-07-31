@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface AnsweredMessage {
@@ -14,14 +14,34 @@ interface AnsweredMessage {
 interface ProfileClientProps {
   username: string;
   initialAnswers: AnsweredMessage[];
+  displayName?: string;
+  bio?: string;
 }
 
-export default function ProfileClient({ username, initialAnswers }: ProfileClientProps) {
+export default function ProfileClient({ 
+  username, 
+  initialAnswers, 
+  displayName, 
+  bio 
+}: ProfileClientProps) {
   const router = useRouter();
   const [messageText, setMessageText] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Toggle view state between sending note and seeing answers
+  const [showAnswers, setShowAnswers] = useState(false);
+
+  const [mounted, setMounted] = useState(false);
+
+  // Load theme on mount
+  useEffect(() => {
+    setMounted(true);
+    const savedTheme = localStorage.getItem("mimi-theme") || "theme-peach";
+    const savedDark = localStorage.getItem("mimi-dark") === "true";
+    document.body.className = `${savedTheme} ${savedDark ? "dark-mode" : ""}`;
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,8 +61,9 @@ export default function ProfileClient({ username, initialAnswers }: ProfileClien
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to send message");
 
-      setSuccess("Your anonymous note was dropped successfully! 🐰");
+      setSuccess("Your anonymous note was dropped successfully!");
       setMessageText("");
+      setTimeout(() => setSuccess(""), 5000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -52,134 +73,167 @@ export default function ProfileClient({ username, initialAnswers }: ProfileClien
 
   return (
     <main className="desktop">
-      {/* Header/Taskbar */}
-      <header className="taskbar">
+      {/* Header/Navbar */}
+      <header className="taskbar" style={{ maxWidth: "450px" }}>
         <div className="logo-container">
-          <span style={{ fontSize: "28px" }}>✉️</span>
-          <span className="logo-text">Mimi Mail Board</span>
+          <span className="logo-text">Mini Mail</span>
         </div>
         <div className="nav-links">
           <button 
             onClick={() => router.push("/")} 
             className="retro-btn btn-white"
-            style={{ padding: "6px 12px", fontSize: "13px" }}
+            style={{ padding: "5px 12px", fontSize: "12px" }}
           >
-            Create My Own Board
+            Create My Own
           </button>
         </div>
       </header>
 
-      <div className="grid-2">
-        {/* Send message box */}
-        <section className="retro-window">
-          <div className="window-titlebar" style={{ backgroundColor: "var(--accent-teal)" }}>
-            <div className="window-title">
-              <span>✍️</span> Note to {username}
-            </div>
-            <div className="window-controls">
-              <button className="window-btn">-</button>
-              <button className="window-btn">▢</button>
-              <button className="window-btn close-btn">✕</button>
-            </div>
-          </div>
-          <div className="window-body">
-            <div className="mascot-container">
-              <div className="mascot-bunny" style={{ fontSize: "40px" }}>🐰💌</div>
-            </div>
-            <p style={{ fontSize: "14px", marginBottom: "16px", fontStyle: "italic", textAlign: "center" }}>
-              Leave a sweet, funny, or anonymous note for {username} below! It is 100% anonymous.
-            </p>
-
-            {error && (
-              <div className="retro-window" style={{ border: "2px solid #D9534F", marginBottom: "16px", borderRadius: "8px" }}>
-                <div className="window-titlebar" style={{ backgroundColor: "#D9534F", padding: "4px 8px", borderBottom: "2px solid #2C221E" }}>
-                  <span style={{ color: "#FFF", fontSize: "12px", fontWeight: "bold" }}>⚠️ Error</span>
-                </div>
-                <div className="window-body" style={{ padding: "8px", fontSize: "13px", backgroundColor: "#FDF7F7" }}>
-                  {error}
+      <div style={{ width: "100%", maxWidth: "450px", display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Toggle view block */}
+        {!showAnswers ? (
+          <>
+            {/* Send message box */}
+            <section className="retro-window">
+              <div className="window-titlebar" style={{ backgroundColor: "var(--accent-primary)" }}>
+                <div className="window-title">
+                  Note to {displayName || username}
                 </div>
               </div>
-            )}
+              <div className="window-body">
+                <p style={{ fontSize: "13px", marginBottom: "16px", fontWeight: 500, textAlign: "center", color: "#6E6865", lineHeight: "1.5" }}>
+                  {bio || `Leave a sweet, funny, or anonymous note for ${displayName || username}! It is 100% anonymous.`}
+                </p>
 
-            {success && (
-              <div className="retro-window" style={{ border: "2px solid #5CB85C", marginBottom: "16px", borderRadius: "8px" }}>
-                <div className="window-titlebar" style={{ backgroundColor: "#5CB85C", padding: "4px 8px", borderBottom: "2px solid #2C221E" }}>
-                  <span style={{ color: "#FFF", fontSize: "12px", fontWeight: "bold" }}>✔️ Success</span>
-                </div>
-                <div className="window-body" style={{ padding: "8px", fontSize: "13px", backgroundColor: "#F7FDF7" }}>
-                  {success}
-                </div>
-              </div>
-            )}
+                {error && (
+                  <div className="retro-window" style={{ border: "1.5px solid #D9534F", marginBottom: "16px", boxShadow: "none" }}>
+                    <div className="window-body" style={{ padding: "10px 14px", fontSize: "13px", backgroundColor: "#FDF7F7", fontWeight: 500 }}>
+                      Error: {error}
+                    </div>
+                  </div>
+                )}
 
-            <form onSubmit={handleSubmit}>
-              <div className="form-group" style={{ marginBottom: "20px" }}>
-                <textarea 
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  className="retro-input"
-                  placeholder="Drop a nice message here... (it's anonymous!)"
-                  rows={5}
-                  maxLength={500}
-                  required
-                  disabled={submitting}
-                  style={{ resize: "none" }}
-                />
-              </div>
+                {success && (
+                  <div className="retro-window" style={{ border: "1.5px solid #5CB85C", marginBottom: "16px", boxShadow: "none" }}>
+                    <div className="window-body" style={{ padding: "10px 14px", fontSize: "13px", backgroundColor: "#F7FDF7", fontWeight: 500 }}>
+                      {success}
+                    </div>
+                  </div>
+                )}
 
-              <button 
-                type="submit" 
-                className="retro-btn btn-teal" 
-                style={{ width: "100%", padding: "12px" }}
-                disabled={submitting}
-              >
-                {submitting ? "Sending..." : "Send Note Anonymously"}
-              </button>
-            </form>
-          </div>
-        </section>
-
-        {/* Board of answered messages */}
-        <section className="retro-window">
-          <div className="window-titlebar" style={{ backgroundColor: "var(--accent-purple)" }}>
-            <div className="window-title">
-              <span>🌟</span> Answer Board
-            </div>
-            <div className="window-controls">
-              <button className="window-btn">-</button>
-              <button className="window-btn">▢</button>
-              <button className="window-btn close-btn">✕</button>
-            </div>
-          </div>
-          <div className="window-body">
-            <h3 style={{ fontSize: "15px", marginBottom: "16px", borderBottom: "3px solid var(--border-color)", paddingBottom: "8px" }}>
-              Answered Letters ({initialAnswers.length})
-            </h3>
-            
-            {initialAnswers.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 0", color: "#666", fontSize: "14px" }}>
-                🐰 {username} hasn't answered any letters yet. Check back later!
-              </div>
-            ) : (
-              initialAnswers.map(ans => (
-                <div key={ans.id} className="message-card">
-                  <div className="message-text">“{ans.message_text}”</div>
-                  
-                  <div className="reply-section">
-                    <div className="reply-title">{username}'s Answer:</div>
-                    <div className="reply-text">{ans.reply_text}</div>
+                <form onSubmit={handleSubmit}>
+                  <div className="form-group" style={{ marginBottom: "16px" }}>
+                    <textarea 
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      className="retro-input"
+                      placeholder="Drop a nice message here... (it's anonymous!)"
+                      rows={5}
+                      maxLength={500}
+                      required
+                      disabled={submitting}
+                      style={{ resize: "none" }}
+                    />
                   </div>
 
-                  <div className="message-meta" style={{ marginTop: "12px" }}>
-                    <span>Anonymous</span>
-                    <span>{new Date(ans.answered_at).toLocaleDateString()}</span>
-                  </div>
+                  <button 
+                    type="submit" 
+                    className="retro-btn btn-primary" 
+                    style={{ width: "100%", padding: "10px" }}
+                    disabled={submitting}
+                  >
+                    {submitting ? "Sending..." : "Send Note Anonymously"}
+                  </button>
+                </form>
+              </div>
+            </section>
+
+            <button 
+              onClick={() => {
+                setShowAnswers(true);
+                setError("");
+                setSuccess("");
+              }} 
+              className="retro-btn btn-white" 
+              style={{ width: "100%", padding: "10px" }}
+            >
+              See Answer Board ({initialAnswers.length})
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Board of answered messages */}
+            <section className="retro-window">
+              <div className="window-titlebar" style={{ backgroundColor: "var(--accent-primary)" }}>
+                <div className="window-title">
+                  Answer Board
                 </div>
-              ))
-            )}
-          </div>
-        </section>
+              </div>
+              <div className="window-body">
+                <h3 style={{ fontSize: "15px", fontWeight: 700, marginBottom: "16px", borderBottom: "1.5px solid var(--border-color)", paddingBottom: "8px", letterSpacing: "-0.2px" }}>
+                  Answered Letters ({initialAnswers.length})
+                </h3>
+                
+                {initialAnswers.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "32px 0", color: "#8A8480", fontSize: "13px", fontWeight: 500 }}>
+                    {displayName || username} hasn't answered any letters yet. Check back later!
+                  </div>
+                ) : (
+                  initialAnswers.map(ans => (
+                    <div key={ans.id} className="message-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {/* Top Row: Note ID header */}
+                      <div>
+                        <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--border-color)" }}>Anonymous Note #{ans.id}</span>
+                      </div>
+
+                      {/* Question Content */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                        <div className="message-text" style={{ fontSize: "15px", margin: 0 }}>“{ans.message_text}”</div>
+                        <span style={{ fontSize: "11px", color: "#8A8480" }}>Asked: {mounted ? new Date(ans.created_at).toLocaleString() : ""}</span>
+                      </div>
+
+                      {/* Answer Section */}
+                      <div style={{ 
+                        borderLeft: "3.5px solid var(--accent-primary)", 
+                        paddingLeft: "12px", 
+                        marginTop: "4px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "2px"
+                      }}>
+                        <div>
+                          <span style={{ fontWeight: 800, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#7A706B", marginRight: "8px" }}>
+                            {displayName || username}:
+                          </span>
+                          <span style={{ fontSize: "14px", fontWeight: 500, color: "#2C221E" }}>{ans.reply_text}</span>
+                        </div>
+                        <span style={{ fontSize: "11px", color: "#8A8480" }}>Answered: {mounted ? new Date(ans.answered_at).toLocaleString() : ""}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+
+            <button 
+              onClick={() => setShowAnswers(false)} 
+              className="retro-btn btn-white" 
+              style={{ width: "100%", padding: "10px" }}
+            >
+              Write a Note
+            </button>
+          </>
+        )}
       </div>
+
+      {/* Footer */}
+      <footer className="footer" style={{ maxWidth: "450px" }}>
+        <div>&copy; 2026 Mimi Mail.</div>
+        <div className="footer-links">
+          <a href="/about" className="footer-link">About Us</a>
+          <a href="/terms" className="footer-link">Terms</a>
+        </div>
+      </footer>
     </main>
   );
 }

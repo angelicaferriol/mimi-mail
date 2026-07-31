@@ -1,20 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Cute Pastel Palette */
-  --bg-desktop: #8EE4DF; /* Retro Soft Teal */
-  --bg-window: #FFF9F2;  /* Soft Warm Cream */
-  --border-color: #2C221E; /* Deep Retro Brown/Black */
-  
-  --accent-pink: #F7B5C3;  /* Kawaii Pink */
-  --accent-peach: #F6B89E; /* Kawaii Peach */
-  --accent-teal: #94E1D4;  /* Kawaii Teal */
-  --accent-yellow: #F7D976; /* Kawaii Yellow */
-  --accent-purple: #D7C6EB; /* Kawaii Lavender */
-  
+  /* Cute Minimalist Pastel Palette */
+  --bg-desktop: #FDFBF7; /* Cleaner, lighter warm white */
+  --bg-window: #FFFFFF;  /* Pure white */
+  --border-color: #2C221E; /* Deep Charcoal/Brown */
   --shadow-color: #2C221E;
+  --bg-input: #FFFFFF;
+  --text-muted: #6E6865;
+  --border-divider: #F0ECE9;
+  
+  /* Individual color palettes - softer/lighter */
+  --accent-peach: #FCD9D2;
+  --accent-peach-hover: #FBBBB0;
+  
+  --accent-green: #D3ECE1;
+  --accent-green-hover: #BCE3D2;
+  
+  --accent-purple: #E7E1F5;
+  --accent-purple-hover: #D7CDEC;
+  
+  --accent-yellow: #FEECD0;
+  --accent-yellow-hover: #FCE1B3;
+
   --font-sans: 'Outfit', sans-serif;
-  --font-pixel: 'VT323', monospace;
+  
+  /* Default Primary Accent (Peach) */
+  --accent-primary: var(--accent-peach);
+  --accent-primary-hover: var(--accent-peach-hover);
+}
+
+
+
+/* Theme Overrides */
+body.theme-peach {
+  --accent-primary: var(--accent-peach);
+  --accent-primary-hover: var(--accent-peach-hover);
+}
+body.theme-green {
+  --accent-primary: var(--accent-green);
+  --accent-primary-hover: var(--accent-green-hover);
+}
+body.theme-purple {
+  --accent-primary: var(--accent-purple);
+  --accent-primary-hover: var(--accent-purple-hover);
+}
+body.theme-yellow {
+  --accent-primary: var(--accent-yellow);
+  --accent-primary-hover: var(--accent-yellow-hover);
 }
 
 * {
@@ -25,11 +58,6 @@
 
 body {
   background-color: var(--bg-desktop);
-  background-image: 
-    radial-gradient(var(--border-color) 1px, transparent 0),
-    radial-gradient(var(--border-color) 1px, transparent 0);
-  background-size: 24px 24px;
-  background-position: 0 0, 12px 12px;
   color: var(--border-color);
   font-family: var(--font-sans);
   overflow-x: hidden;
@@ -38,41 +66,42 @@ body {
 
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-window);
-  border-left: 3px solid var(--border-color);
+  background: var(--bg-desktop);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--accent-peach);
-  border: 3px solid var(--border-color);
-  border-radius: 4px;
+  background: var(--accent-primary);
+  border: 1.5px solid var(--border-color);
+  border-radius: 9999px;
 }
 
-/* Main Retro Desktop Layout */
+/* Main Minimalist Desktop Layout */
 .desktop {
   min-height: 100vh;
-  padding: 24px;
+  padding: 48px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-/* Desktop Taskbar / Header */
+/* Minimalist Navbar Header */
 .taskbar {
   width: 100%;
-  max-width: 1000px;
+  max-width: 800px;
   background: var(--bg-window);
-  border: 3px solid var(--border-color);
-  border-radius: 12px;
-  padding: 12px 24px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 9999px; /* Pill-shaped header */
+  padding: 10px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  box-shadow: 4px 4px 0px var(--shadow-color);
+  margin-bottom: 48px;
+  box-shadow: 2px 2px 0px var(--shadow-color);
 }
 
 .logo-container {
@@ -82,9 +111,10 @@ body {
 }
 
 .logo-text {
-  font-family: var(--font-pixel);
-  font-size: 28px;
-  font-weight: bold;
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .nav-links {
@@ -93,12 +123,12 @@ body {
   align-items: center;
 }
 
-/* Retro Window Container */
+/* Softer Cards */
 .retro-window {
   background: var(--bg-window);
-  border: 3px solid var(--border-color);
-  border-radius: 16px;
-  box-shadow: 6px 6px 0px var(--shadow-color);
+  border: 1.5px solid var(--border-color);
+  border-radius: 20px; /* Clean rounded corners */
+  box-shadow: 3px 3px 0px var(--shadow-color);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -107,8 +137,8 @@ body {
 }
 
 .window-titlebar {
-  border-bottom: 3px solid var(--border-color);
-  padding: 10px 16px;
+  border-bottom: 1.5px solid var(--border-color);
+  padding: 14px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -116,82 +146,57 @@ body {
 }
 
 .window-title {
-  font-weight: 800;
+  font-weight: 700;
   font-size: 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.window-controls {
-  display: flex;
   gap: 6px;
-}
-
-.window-btn {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--border-color);
-  border-radius: 6px;
-  background: #FFF;
-  font-family: var(--font-sans);
-  font-weight: bold;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 1px 1px 0px var(--border-color);
-}
-
-.window-btn:active {
-  transform: translate(1px, 1px);
-  box-shadow: 0px 0px 0px var(--border-color);
-}
-
-.window-btn.close-btn {
-  background: var(--accent-pink);
+  letter-spacing: -0.1px;
 }
 
 .window-body {
-  padding: 20px;
+  padding: 24px;
   flex-grow: 1;
 }
 
-/* Retro Buttons */
+/* Minimalist Retro Buttons */
 .retro-btn {
-  border: 3px solid var(--border-color);
-  border-radius: 12px;
-  padding: 10px 20px;
-  font-weight: bold;
+  border: 1.5px solid var(--border-color);
+  border-radius: 9999px; /* Pill-shaped buttons */
+  padding: 8px 20px;
+  font-weight: 700;
   font-family: var(--font-sans);
   cursor: pointer;
-  box-shadow: 3px 3px 0px var(--shadow-color);
-  transition: transform 0.05s, box-shadow 0.05s;
+  box-shadow: 2px 2px 0px var(--shadow-color);
+  transition: transform 0.1s, box-shadow 0.1s, background-color 0.2s;
   text-decoration: none;
   color: var(--border-color);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
+  font-size: 14px;
 }
 
 .retro-btn:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px var(--shadow-color);
+  box-shadow: 3px 3px 0px var(--shadow-color);
 }
 
 .retro-btn:active {
-  transform: translate(2px, 2px);
+  transform: translate(1px, 1px);
   box-shadow: 1px 1px 0px var(--shadow-color);
 }
 
-.btn-pink { background-color: var(--accent-pink); }
-.btn-peach { background-color: var(--accent-peach); }
-.btn-teal { background-color: var(--accent-teal); }
-.btn-yellow { background-color: var(--accent-yellow); }
-.btn-purple { background-color: var(--accent-purple); }
-.btn-white { background-color: #FFF; }
+.btn-primary { 
+  background-color: var(--accent-primary); 
+}
+.btn-primary:hover {
+  background-color: var(--accent-primary-hover);
+}
+
+.btn-white { background-color: var(--bg-input); }
+.btn-white:hover { background-color: var(--bg-desktop); }
 
 /* Form Fields */
 .form-group {
@@ -200,26 +205,26 @@ body {
 
 .form-label {
   display: block;
-  font-weight: bold;
+  font-weight: 700;
   margin-bottom: 6px;
+  font-size: 14px;
 }
 
 .retro-input {
   width: 100%;
-  border: 3px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   border-radius: 12px;
-  padding: 12px;
+  padding: 12px 16px;
   font-family: var(--font-sans);
   font-size: 14px;
-  background: #FFF;
+  background: var(--bg-input);
   color: var(--border-color);
-  box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
   outline: none;
+  transition: border-color 0.2s;
 }
 
 .retro-input:focus {
-  border-color: var(--accent-peach);
-  box-shadow: 0 0 0 3px var(--accent-pink);
+  border-color: var(--accent-primary);
 }
 
 /* Custom Grid Utility */
@@ -228,7 +233,7 @@ body {
   grid-template-columns: 1fr;
   gap: 24px;
   width: 100%;
-  max-width: 1000px;
+  max-width: 800px;
 }
 
 @media (min-width: 768px) {
@@ -237,70 +242,163 @@ body {
   }
 }
 
-/* Floating Retro Items / Mascot styling */
-.mascot-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.mascot-bunny {
-  width: 70px;
-  height: 70px;
-  position: relative;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
-}
-
 /* Message List and Cards */
 .message-card {
-  border: 3px solid var(--border-color);
-  background: #FFF;
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 4px 4px 0px var(--shadow-color);
+  padding: 18px 0;
+  border-bottom: 1.5px solid var(--border-divider);
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  transition: none;
+}
+
+.message-card:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.message-card:first-child {
+  padding-top: 0;
 }
 
 .message-text {
-  font-size: 16px;
-  line-height: 1.4;
-  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 10px;
 }
 
 .message-meta {
   font-size: 12px;
-  color: #666;
+  font-weight: 600;
+  color: #8A8480;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .reply-section {
-  border-top: 3px dashed var(--border-color);
-  padding-top: 12px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
-.reply-title {
-  font-weight: 800;
+/* Color theme dots for settings */
+.theme-picker {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.theme-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border-color);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 1.5px 1.5px 0px var(--shadow-color);
+}
+
+.theme-dot:hover {
+  transform: scale(1.08);
+}
+
+.theme-dot.active {
+  transform: scale(1.08);
+  box-shadow: 0px 0px 0px transparent;
+  outline: 1.5px solid var(--border-color);
+  outline-offset: 2px;
+}
+
+/* Footer Styles */
+.footer {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1.5px solid #EBE7E4;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
   font-size: 13px;
-  color: var(--accent-peach);
-  text-transform: uppercase;
-  margin-bottom: 4px;
+  font-weight: 500;
+  color: #8A8480;
+  text-align: center;
 }
 
-.reply-text {
-  font-size: 15px;
-  line-height: 1.4;
-  background: var(--bg-window);
-  padding: 10px;
-  border-radius: 8px;
-  border: 2px solid var(--border-color);
+@media (min-width: 600px) {
+  .footer {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-link {
+  color: #8A8480;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-link:hover {
+  color: var(--border-color);
+  text-decoration: underline;
+}
+
+/* Chat Bubble Layout Styles */
+.chat-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.bubble-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 85%;
+}
+
+.bubble-container.left {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.bubble-container.right {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.chat-bubble {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  border: 1.5px solid var(--border-color);
+  box-shadow: 1.5px 1.5px 0px var(--shadow-color);
+}
+
+.chat-bubble.left {
+  background-color: #FFF;
+  border-radius: 16px 16px 16px 4px;
+  color: var(--border-color);
+}
+
+.chat-bubble.right {
+  background-color: var(--accent-primary);
+  border-radius: 16px 16px 4px 16px;
+  color: var(--border-color);
+}
+
+.bubble-meta {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8A8480;
+  margin-top: 4px;
+  padding: 0 4px;
 }

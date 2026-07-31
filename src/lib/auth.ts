@@ -1,19 +1,26 @@
 import jwt from 'jsonwebtoken';
 import { cookies as getCookies } from 'next/headers';
 
-if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required in production!');
-}
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-mimi-key-123';
-
 export interface UserSession {
   userId: number;
   username: string;
   email: string;
 }
 
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET environment variable is required in production!');
+    }
+    return 'super-secret-mimi-key-123';
+  }
+  return secret;
+}
+
 export async function createSession(user: UserSession) {
-  const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
+  const secret = getJwtSecret();
+  const token = jwt.sign(user, secret, { expiresIn: '7d' });
   const cookieStore = await getCookies();
   cookieStore.set('session', token, {
     httpOnly: true,
@@ -30,7 +37,8 @@ export async function getSession(): Promise<UserSession | null> {
   if (!sessionCookie) return null;
 
   try {
-    const decoded = jwt.verify(sessionCookie.value, JWT_SECRET) as UserSession;
+    const secret = getJwtSecret();
+    const decoded = jwt.verify(sessionCookie.value, secret) as UserSession;
     return decoded;
   } catch (err) {
     return null;

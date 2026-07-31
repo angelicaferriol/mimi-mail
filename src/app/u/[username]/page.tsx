@@ -12,28 +12,25 @@ export default async function ProfilePage({ params }: PageProps) {
   const cleanUsername = username.toLowerCase();
 
   // Find user in database
-  const user = db.prepare('SELECT id, username FROM users WHERE username = ?').get(cleanUsername) as any;
+  const user = db.prepare(
+    'SELECT id, username, display_name, bio FROM users WHERE username = ?'
+  ).get(cleanUsername) as any;
 
   if (!user) {
     return (
       <main className="desktop">
-        <section className="retro-window" style={{ maxWidth: "450px", marginTop: "10%" }}>
+        <section className="retro-window" style={{ maxWidth: "420px", marginTop: "10%" }}>
           <div className="window-titlebar" style={{ backgroundColor: "#D9534F" }}>
-            <div className="window-title">
-              <span>⚠️</span> Error 404
-            </div>
-            <div className="window-controls">
-              <button className="window-btn">-</button>
-              <button className="window-btn">▢</button>
-              <button className="window-btn close-btn">✕</button>
+            <div className="window-title" style={{ color: "#FFF" }}>
+              Error 404
             </div>
           </div>
           <div className="window-body" style={{ textAlign: "center", padding: "30px 20px" }}>
-            <h2 style={{ fontSize: "20px", marginBottom: "12px" }}>User Not Found</h2>
-            <p style={{ fontSize: "14px", color: "#666", marginBottom: "20px" }}>
+            <h2 style={{ fontSize: "18px", marginBottom: "12px", fontWeight: 800 }}>User Not Found</h2>
+            <p style={{ fontSize: "14px", color: "#6E6865", marginBottom: "20px", fontWeight: 500 }}>
               The profile folder for <strong>u/{username}</strong> does not exist on our servers!
             </p>
-            <a href="/" className="retro-btn btn-peach" style={{ display: "inline-block" }}>
+            <a href="/" className="retro-btn btn-white" style={{ display: "inline-block" }}>
               Go Back Home
             </a>
           </div>
@@ -60,6 +57,8 @@ export default async function ProfilePage({ params }: PageProps) {
     <ProfileClient 
       username={user.username} 
       initialAnswers={serializedAnswers} 
+      displayName={user.display_name || ''}
+      bio={user.bio || ''}
     />
   );
 }

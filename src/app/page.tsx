@@ -13,10 +13,11 @@ export default function LandingPage() {
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if session exists on load
+  // Load theme on mount
   useEffect(() => {
-    // We can do a quick check via an API or cookies if we want,
-    // or just let dashboard handle it.
+    const savedTheme = localStorage.getItem("mimi-theme") || "theme-peach";
+    const savedDark = localStorage.getItem("mimi-dark") === "true";
+    document.body.className = `${savedTheme} ${savedDark ? "dark-mode" : ""}`;
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -60,75 +61,50 @@ export default function LandingPage() {
 
   return (
     <main className="desktop">
-      {/* Header/Taskbar */}
-      <header className="taskbar">
+      {/* Header/Navbar */}
+      <header className="taskbar" style={{ maxWidth: "420px" }}>
         <div className="logo-container">
-          <span style={{ fontSize: "28px" }}>✉️</span>
-          <h1 className="logo-text">Mimi Mail</h1>
+          <h1 className="logo-text">Mini Mail</h1>
         </div>
         <div className="nav-links">
           <button 
             onClick={() => setIsLogin(true)} 
-            className={`retro-btn ${isLogin ? 'btn-peach' : 'btn-white'}`}
-            style={{ padding: '6px 12px', fontSize: '14px' }}
+            className={`retro-btn ${isLogin ? 'btn-primary' : 'btn-white'}`}
+            style={{ padding: '5px 12px', fontSize: '13px' }}
           >
             Log In
           </button>
           <button 
             onClick={() => setIsLogin(false)} 
-            className={`retro-btn ${!isLogin ? 'btn-peach' : 'btn-white'}`}
-            style={{ padding: '6px 12px', fontSize: '14px' }}
+            className={`retro-btn ${!isLogin ? 'btn-primary' : 'btn-white'}`}
+            style={{ padding: '5px 12px', fontSize: '13px' }}
           >
             Sign Up
           </button>
         </div>
       </header>
 
-      {/* Mascot Section */}
-      <div className="mascot-container">
-        <div className="mascot-bunny" style={{ fontSize: "50px", textAlign: "center" }}>
-          🐰
-        </div>
-      </div>
-
-      {/* Auth Window */}
-      <section className="retro-window" style={{ maxWidth: "450px" }}>
-        <div className="window-titlebar" style={{ backgroundColor: isLogin ? "var(--accent-pink)" : "var(--accent-teal)" }}>
+      {/* Auth Box */}
+      <section className="retro-window" style={{ maxWidth: "420px" }}>
+        <div className="window-titlebar" style={{ backgroundColor: "var(--accent-primary)" }}>
           <div className="window-title">
-            <span>💾</span>
-            {isLogin ? "Login.exe" : "Register.exe"}
-          </div>
-          <div className="window-controls">
-            <button className="window-btn">-</button>
-            <button className="window-btn">▢</button>
-            <button className="window-btn close-btn">✕</button>
+            {isLogin ? "Log In" : "Register"}
           </div>
         </div>
 
         <div className="window-body">
-          <p style={{ marginBottom: "16px", fontSize: "14px", textAlign: "center", fontStyle: "italic" }}>
-            {isLogin 
-              ? "Welcome back! Enter your credentials to view your inbox."
-              : "Claim your unique username and start receiving anonymous sweet notes!"}
-          </p>
 
           {error && (
-            <div className="retro-window" style={{ border: "2px solid #D9534F", marginBottom: "16px", borderRadius: "8px" }}>
-              <div className="window-titlebar" style={{ backgroundColor: "#D9534F", padding: "4px 8px", borderBottom: "2px solid #2C221E" }}>
-                <span style={{ color: "#FFF", fontSize: "12px", fontWeight: "bold" }}>⚠️ Error</span>
-              </div>
-              <div className="window-body" style={{ padding: "8px", fontSize: "13px", backgroundColor: "#FDF7F7" }}>
-                {error}
+            <div className="retro-window" style={{ border: "1.5px solid #D9534F", marginBottom: "16px", boxShadow: "none" }}>
+              <div className="window-body" style={{ padding: "10px 14px", fontSize: "13px", backgroundColor: "#FDF7F7", fontWeight: 500 }}>
+                Error: {error}
               </div>
             </div>
           )}
 
           {success && (
-            <div className="retro-window" style={{ border: "2px solid #5CB85C", marginBottom: "16px", borderRadius: "8px" }}>
-              <div className="window-titlebar" style={{ backgroundColor: "#5CB85C", padding: "4px 8px", borderBottom: "2px solid #2C221E" }}>
-                <span style={{ color: "#FFF", fontSize: "12px", fontWeight: "bold" }}>✔️ Success</span>
-              </div>
-              <div className="window-body" style={{ padding: "8px", fontSize: "13px", backgroundColor: "#F7FDF7" }}>
+            <div className="retro-window" style={{ border: "1.5px solid #5CB85C", marginBottom: "16px", boxShadow: "none" }}>
+              <div className="window-body" style={{ padding: "10px 14px", fontSize: "13px", backgroundColor: "#F7FDF7", fontWeight: 500 }}>
                 {success}
               </div>
             </div>
@@ -167,7 +143,7 @@ export default function LandingPage() {
               />
             </div>
 
-            <div className="form-group" style={{ marginBottom: "24px" }}>
+            <div className="form-group" style={{ marginBottom: "20px" }}>
               <label className="form-label" htmlFor="password">Password</label>
               <input 
                 type="password" 
@@ -183,21 +159,21 @@ export default function LandingPage() {
 
             <button 
               type="submit" 
-              className={`retro-btn ${isLogin ? "btn-pink" : "btn-teal"}`}
-              style={{ width: "100%", padding: "12px" }}
+              className="retro-btn btn-primary"
+              style={{ width: "100%", padding: "10px" }}
               disabled={isLoading}
             >
               {isLoading ? "Loading..." : isLogin ? "Open My Mailbox" : "Create My Account"}
             </button>
           </form>
 
-          <div style={{ marginTop: "16px", textAlign: "center", fontSize: "13px" }}>
+          <div style={{ marginTop: "16px", textAlign: "center", fontSize: "13px", fontWeight: 500, color: "#6E6865" }}>
             {isLogin ? (
               <p>
                 Don't have an account?{" "}
                 <span 
                   onClick={() => setIsLogin(false)} 
-                  style={{ textDecoration: "underline", cursor: "pointer", fontWeight: "bold" }}
+                  style={{ textDecoration: "underline", cursor: "pointer", fontWeight: "bold", color: "var(--border-color)" }}
                 >
                   Create one here
                 </span>
@@ -207,7 +183,7 @@ export default function LandingPage() {
                 Already have an account?{" "}
                 <span 
                   onClick={() => setIsLogin(true)} 
-                  style={{ textDecoration: "underline", cursor: "pointer", fontWeight: "bold" }}
+                  style={{ textDecoration: "underline", cursor: "pointer", fontWeight: "bold", color: "var(--border-color)" }}
                 >
                   Log in here
                 </span>
@@ -216,6 +192,15 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="footer" style={{ maxWidth: "420px" }}>
+        <div>&copy; 2026 Mimi Mail.</div>
+        <div className="footer-links">
+          <a href="/about" className="footer-link">About Us</a>
+          <a href="/terms" className="footer-link">Terms</a>
+        </div>
+      </footer>
     </main>
   );
 }
