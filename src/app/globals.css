@@ -1,0 +1,306 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=VT323&display=swap');
+
+:root {
+  /* Cute Pastel Palette */
+  --bg-desktop: #8EE4DF; /* Retro Soft Teal */
+  --bg-window: #FFF9F2;  /* Soft Warm Cream */
+  --border-color: #2C221E; /* Deep Retro Brown/Black */
+  
+  --accent-pink: #F7B5C3;  /* Kawaii Pink */
+  --accent-peach: #F6B89E; /* Kawaii Peach */
+  --accent-teal: #94E1D4;  /* Kawaii Teal */
+  --accent-yellow: #F7D976; /* Kawaii Yellow */
+  --accent-purple: #D7C6EB; /* Kawaii Lavender */
+  
+  --shadow-color: #2C221E;
+  --font-sans: 'Outfit', sans-serif;
+  --font-pixel: 'VT323', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-desktop);
+  background-image: 
+    radial-gradient(var(--border-color) 1px, transparent 0),
+    radial-gradient(var(--border-color) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  color: var(--border-color);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-window);
+  border-left: 3px solid var(--border-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent-peach);
+  border: 3px solid var(--border-color);
+  border-radius: 4px;
+}
+
+/* Main Retro Desktop Layout */
+.desktop {
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Desktop Taskbar / Header */
+.taskbar {
+  width: 100%;
+  max-width: 1000px;
+  background: var(--bg-window);
+  border: 3px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  box-shadow: 4px 4px 0px var(--shadow-color);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-text {
+  font-family: var(--font-pixel);
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.nav-links {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Retro Window Container */
+.retro-window {
+  background: var(--bg-window);
+  border: 3px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0px var(--shadow-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.window-titlebar {
+  border-bottom: 3px solid var(--border-color);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.window-title {
+  font-weight: 800;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.window-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.window-btn {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  background: #FFF;
+  font-family: var(--font-sans);
+  font-weight: bold;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 1px 1px 0px var(--border-color);
+}
+
+.window-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 0px 0px 0px var(--border-color);
+}
+
+.window-btn.close-btn {
+  background: var(--accent-pink);
+}
+
+.window-body {
+  padding: 20px;
+  flex-grow: 1;
+}
+
+/* Retro Buttons */
+.retro-btn {
+  border: 3px solid var(--border-color);
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: bold;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  box-shadow: 3px 3px 0px var(--shadow-color);
+  transition: transform 0.05s, box-shadow 0.05s;
+  text-decoration: none;
+  color: var(--border-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.retro-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px var(--shadow-color);
+}
+
+.retro-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px var(--shadow-color);
+}
+
+.btn-pink { background-color: var(--accent-pink); }
+.btn-peach { background-color: var(--accent-peach); }
+.btn-teal { background-color: var(--accent-teal); }
+.btn-yellow { background-color: var(--accent-yellow); }
+.btn-purple { background-color: var(--accent-purple); }
+.btn-white { background-color: #FFF; }
+
+/* Form Fields */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.retro-input {
+  width: 100%;
+  border: 3px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  background: #FFF;
+  color: var(--border-color);
+  box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
+  outline: none;
+}
+
+.retro-input:focus {
+  border-color: var(--accent-peach);
+  box-shadow: 0 0 0 3px var(--accent-pink);
+}
+
+/* Custom Grid Utility */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  width: 100%;
+  max-width: 1000px;
+}
+
+@media (min-width: 768px) {
+  .grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Floating Retro Items / Mascot styling */
+.mascot-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.mascot-bunny {
+  width: 70px;
+  height: 70px;
+  position: relative;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Message List and Cards */
+.message-card {
+  border: 3px solid var(--border-color);
+  background: #FFF;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 4px 4px 0px var(--shadow-color);
+}
+
+.message-text {
+  font-size: 16px;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.message-meta {
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reply-section {
+  border-top: 3px dashed var(--border-color);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.reply-title {
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent-peach);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.reply-text {
+  font-size: 15px;
+  line-height: 1.4;
+  background: var(--bg-window);
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+}
