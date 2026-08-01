@@ -1,0 +1,20 @@
+{
+  "name": "mimi-mail",
+  "pages_build_output_dir": ".vercel/output/static",
+  "compatibility_date": "2024-09-23",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mimi-mail-db",
+      "database_id": "8e96877d-c1ed-45c9-b67a-2bc8b4e910b6"
+    }
+  ],
+  "vars": {
+    "EMAIL_USER": "your-email@gmail.com",
+    "EMAIL_PASS": "your-gmail-app-password",
+    "JWT_SECRET": "your-jwt-secret"
+  }
+}

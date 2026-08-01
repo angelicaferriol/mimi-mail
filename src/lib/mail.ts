@@ -1,3 +1,5 @@
+import { getRequestContext } from '@cloudflare/next-on-pages';
+
 interface SendMailParams {
   to: string;
   subject: string;
@@ -6,45 +8,82 @@ interface SendMailParams {
 }
 
 export async function sendEmail({ to, subject, text, html }: SendMailParams) {
-  const emailUser = process.env.EMAIL_USER;
-  const emailPass = process.env.EMAIL_PASS;
+  let env: any = {};
+  let isProduction = false;
+  try {
+    const context = getRequestContext();
+    if (context?.env) {
+      env = context.env;
+      isProduction = true;
+    }
+  } catch {
+    // Local Node.js environment
+  }
+
+  const emailUser = env.EMAIL_USER || process.env.EMAIL_USER;
+  const emailPass = env.EMAIL_PASS || process.env.EMAIL_PASS;
   const hasConfig = emailUser && emailPass && emailPass !== 'your-google-app-password-here';
 
   if (hasConfig) {
-    const req = typeof require !== 'undefined' ? require : undefined;
-    if (!req) {
-      console.warn('[EMAIL WARNING] Nodemailer SMTP is not supported in the Cloudflare Edge runtime. Falling back to mock logging.');
-      mockLog(to, subject, text);
-      return;
-    }
-    
-    try {
-      const pkgMail = ['node', 'mailer'].join('');
-      const nodemailer = req(pkgMail);
-      
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: emailUser,
-          pass: emailPass,
-        },
-      });
+    if (isProduction) {
+      try {
+        console.log(`[EMAIL] Connecting to Gmail SMTP via worker-mailer...`);
+        const { WorkerMailer } = await import('worker-mailer');
+        const mailer = await WorkerMailer.connect({
+          credentials: {
+            username: emailUser,
+            password: emailPass,
+          },
+          authType: 'login',
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+        });
 
-      await transporter.sendMail({
-        from: emailUser,
-        to,
-        subject,
-        text,
-        html,
-      });
-      console.log(`[EMAIL SENT] Sent mail successfully to: ${to}`);
-    } catch (err) {
-      console.error(`[EMAIL ERROR] Failed to send email to ${to}:`, err);
-      mockLog(to, subject, text);
+        await mailer.send({
+          from: { name: 'Mimi Mail', email: emailUser },
+          to: { email: to },
+          subject: subject,
+          text: text,
+          html: html,
+        });
+        console.log(`[EMAIL SENT] Sent mail successfully via worker-mailer to: ${to}`);
+        return;
+      } catch (err) {
+        console.error(`[EMAIL ERROR] Failed to send email via worker-mailer to ${to}:`, err);
+      }
+    } else {
+      const req = typeof require !== 'undefined' ? require : undefined;
+      if (req) {
+        try {
+          const pkgMail = ['node', 'mailer'].join('');
+          const nodemailer = req(pkgMail);
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: emailUser,
+              pass: emailPass,
+            },
+          });
+
+          await transporter.sendMail({
+            from: emailUser,
+            to,
+            subject,
+            text,
+            html,
+          });
+          console.log(`[EMAIL SENT] Sent SMTP mail successfully to: ${to}`);
+          return;
+        } catch (err) {
+          console.error(`[EMAIL ERROR] Failed to send local SMTP email:`, err);
+        }
+      }
     }
-  } else {
-    mockLog(to, subject, text);
   }
+
+  // Fallback to mockLog
+  mockLog(to, subject, text);
 }
 
 function mockLog(to: string, subject: string, text: string) {

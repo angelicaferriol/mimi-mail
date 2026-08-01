@@ -21,59 +21,67 @@ async function queryBridge(action: string, sql: string, params: any[] = []) {
 
 export const db = {
   async get<T>(sql: string, ...params: any[]): Promise<T | undefined> {
+    let env: any = null;
     try {
       const context = getRequestContext();
-      const env = context?.env as any;
-      if (env?.DB) {
-        return await env.DB.prepare(sql).bind(...params).first();
-      }
+      env = context?.env;
     } catch {
-      // Fallback to local dev database bridge
+      // Not in Cloudflare environment
+    }
+
+    if (env?.DB) {
+      return await env.DB.prepare(sql).bind(...params).first();
     }
     return await queryBridge('get', sql, params) as T | undefined;
   },
   
   async all<T>(sql: string, ...params: any[]): Promise<T[]> {
+    let env: any = null;
     try {
       const context = getRequestContext();
-      const env = context?.env as any;
-      if (env?.DB) {
-        const { results } = await env.DB.prepare(sql).bind(...params).all();
-        return results as T[];
-      }
+      env = context?.env;
     } catch {
-      // Fallback
+      // Not in Cloudflare environment
+    }
+
+    if (env?.DB) {
+      const { results } = await env.DB.prepare(sql).bind(...params).all();
+      return results as T[];
     }
     return await queryBridge('all', sql, params) as T[];
   },
   
   async run(sql: string, ...params: any[]): Promise<{ changes: number; lastInsertRowid: number | null }> {
+    let env: any = null;
     try {
       const context = getRequestContext();
-      const env = context?.env as any;
-      if (env?.DB) {
-        const res = await env.DB.prepare(sql).bind(...params).run();
-        return {
-          changes: res.meta.changes || 0,
-          lastInsertRowid: res.meta.last_row_id || null,
-        };
-      }
+      env = context?.env;
     } catch {
-      // Fallback
+      // Not in Cloudflare environment
+    }
+
+    if (env?.DB) {
+      const res = await env.DB.prepare(sql).bind(...params).run();
+      return {
+        changes: res.meta.changes || 0,
+        lastInsertRowid: res.meta.last_row_id || null,
+      };
     }
     return await queryBridge('run', sql, params);
   },
   
   async exec(sql: string): Promise<void> {
+    let env: any = null;
     try {
       const context = getRequestContext();
-      const env = context?.env as any;
-      if (env?.DB) {
-        await env.DB.exec(sql);
-        return;
-      }
+      env = context?.env;
     } catch {
-      // Fallback
+      // Not in Cloudflare environment
+    }
+
+    if (env?.DB) {
+      await env.DB.exec(sql);
+      return;
     }
     return await queryBridge('exec', sql);
   }

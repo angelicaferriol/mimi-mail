@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "build:pages": "npx @cloudflare/next-on-pages && cp -r .vercel/output/static/_worker.js .vercel/output/ && echo '' > .vercel/output/static/.assetsignore"
+    "build:pages": "npx @cloudflare/next-on-pages"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -17,7 +17,8 @@
     "next": "16.2.12",
     "nodemailer": "^9.0.3",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "worker-mailer": "^1.2.1"
   },
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.16",
