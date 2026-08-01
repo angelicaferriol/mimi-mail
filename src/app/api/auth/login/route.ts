@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { error: 'Account does not exist' },
         { status: 400 }
       );
     }
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         { 
-          error: 'Invalid credentials', 
+          error: 'Incorrect password', 
           showForgotPassword: newAttempts >= 3,
           email: user.email
         },
