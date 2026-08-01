@@ -3,6 +3,8 @@ import db from '@/lib/db';
 import { sendEmail } from '@/lib/mail';
 import { checkRateLimit } from '@/lib/rate-limit';
 
+export const runtime = 'edge';
+
 interface ResetUserRow {
   id: number;
   email: string;
@@ -10,7 +12,7 @@ interface ResetUserRow {
 
 export async function POST(request: Request) {
   try {
-    const rateLimit = checkRateLimit(request, 'auth-forgot-password', 5, 15 * 60 * 1000);
+    const rateLimit = await checkRateLimit(request, 'auth-forgot-password', 5, 15 * 60 * 1000);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many reset requests. Please try again later.' },
@@ -30,7 +32,7 @@ export async function POST(request: Request) {
     const cleanEmail = email.trim().toLowerCase();
 
     // Find user
-    const user = db.prepare('SELECT id, email FROM users WHERE email = ?').get(cleanEmail) as ResetUserRow | undefined;
+    const user = await db.get<ResetUserRow>('SELECT id, email FROM users WHERE email = ?', cleanEmail);
 
     if (!user) {
       // Return success even if email not registered to prevent email enumeration
@@ -40,9 +42,10 @@ export async function POST(request: Request) {
     // Generate reset PIN
     const resetPin = Math.floor(100000 + Math.random() * 900000).toString();
 
-    db.prepare(
-      'UPDATE users SET reset_pin = ?, reset_pin_created_at = ?, reset_pin_attempts = 0 WHERE id = ?'
-    ).run(resetPin, new Date().toISOString(), user.id);
+    await db.run(
+      'UPDATE users SET reset_pin = ?, reset_pin_created_at = ?, reset_pin_attempts = 0 WHERE id = ?',
+      resetPin, new Date().toISOString(), user.id
+    );
 
     // Send email
     await sendEmail({

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 
+export const runtime = 'edge';
+
 interface RecipientRow {
   id: number;
 }
@@ -24,7 +26,7 @@ export async function POST(request: Request) {
     }
 
     // Find recipient user
-    const user = db.prepare('SELECT id FROM users WHERE username = ?').get(username.trim().toLowerCase()) as RecipientRow | undefined;
+    const user = await db.get<RecipientRow>('SELECT id FROM users WHERE username = ?', username.trim().toLowerCase());
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -33,9 +35,10 @@ export async function POST(request: Request) {
     }
 
     // Insert anonymous message
-    db.prepare(
-      'INSERT INTO messages (recipient_id, message_text) VALUES (?, ?)'
-    ).run(user.id, messageText.trim());
+    await db.run(
+      'INSERT INTO messages (recipient_id, message_text) VALUES (?, ?)',
+      user.id, messageText.trim()
+    );
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

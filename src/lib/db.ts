@@ -1,91 +1,82 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { getRequestContext } from '@cloudflare/next-on-pages';
 
-// Define DB file location inside the project directory
-const dbPath = path.join(process.cwd(), 'mimi_mail.db');
-
-const db = new Database(dbPath);
-
-// Initialize database schema
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    display_name TEXT,
-    bio TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  );
-`);
-
-// Safe migrations for existing databases
-try {
-  db.exec("ALTER TABLE users ADD COLUMN display_name TEXT;");
-} catch {
-  // Column already exists
-}
-try {
-  db.exec("ALTER TABLE users ADD COLUMN bio TEXT;");
-} catch {
-  // Column already exists
-}
-try {
-  db.exec("ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0;");
-} catch {
-  // Column already exists
-}
-try {
-  db.exec("ALTER TABLE users ADD COLUMN verification_pin TEXT;");
-} catch {
-  // Column already exists
-}
-try {
-  db.exec("ALTER TABLE users ADD COLUMN verification_pin_created_at TIMESTAMP;");
-} catch {
-  // Column already exists
-}
-try {
-  db.exec("ALTER TABLE users ADD COLUMN verification_pin_attempts INTEGER DEFAULT 0;");
-} catch {
-  // Column already exists
-}
-try {
-  db.exec("ALTER TABLE users ADD COLUMN login_attempts INTEGER DEFAULT 0;");
-} catch {
-  // Column already exists
-}
-try {
-  db.exec("ALTER TABLE users ADD COLUMN reset_pin TEXT;");
-} catch {
-  // Column already exists
-}
-try {
-  db.exec("ALTER TABLE users ADD COLUMN reset_pin_created_at TIMESTAMP;");
-} catch {
-  // Column already exists
-}
-try {
-  db.exec("ALTER TABLE users ADD COLUMN reset_pin_attempts INTEGER DEFAULT 0;");
-} catch {
-  // Column already exists
+async function queryBridge(action: string, sql: string, params: any[] = []) {
+  try {
+    const res = await fetch('http://127.0.0.1:3002', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, sql, params }),
+    });
+    const data = await res.json() as any;
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    return data.result;
+  } catch (err: any) {
+    console.error('[DB CONNECTION ERROR] Failed to connect to local database bridge:', err.message);
+    throw new Error('Local database connection failed: Make sure "node db-bridge.js" is running in the background.');
+  }
 }
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    recipient_id INTEGER NOT NULL,
-    message_text TEXT NOT NULL,
-    reply_text TEXT,
-    is_answered INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    answered_at TIMESTAMP,
-    FOREIGN KEY (recipient_id) REFERENCES users (id) ON DELETE CASCADE
-  );
-`);
-
-db.exec(`
-  CREATE INDEX IF NOT EXISTS idx_messages_recipient_id ON messages (recipient_id);
-`);
+export const db = {
+  async get<T>(sql: string, ...params: any[]): Promise<T | undefined> {
+    try {
+      const context = getRequestContext();
+      const env = context?.env as any;
+      if (env?.DB) {
+        return await env.DB.prepare(sql).bind(...params).first();
+      }
+    } catch {
+      // Fallback to local dev database bridge
+    }
+    return await queryBridge('get', sql, params) as T | undefined;
+  },
+  
+  async all<T>(sql: string, ...params: any[]): Promise<T[]> {
+    try {
+      const context = getRequestContext();
+      const env = context?.env as any;
+      if (env?.DB) {
+        const { results } = await env.DB.prepare(sql).bind(...params).all();
+        return results as T[];
+      }
+    } catch {
+      // Fallback
+    }
+    return await queryBridge('all', sql, params) as T[];
+  },
+  
+  async run(sql: string, ...params: any[]): Promise<{ changes: number; lastInsertRowid: number | null }> {
+    try {
+      const context = getRequestContext();
+      const env = context?.env as any;
+      if (env?.DB) {
+        const res = await env.DB.prepare(sql).bind(...params).run();
+        return {
+          changes: res.meta.changes || 0,
+          lastInsertRowid: res.meta.last_row_id || null,
+        };
+      }
+    } catch {
+      // Fallback
+    }
+    return await queryBridge('run', sql, params);
+  },
+  
+  async exec(sql: string): Promise<void> {
+    try {
+      const context = getRequestContext();
+      const env = context?.env as any;
+      if (env?.DB) {
+        await env.DB.exec(sql);
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+    return await queryBridge('exec', sql);
+  }
+};
 
 export default db;

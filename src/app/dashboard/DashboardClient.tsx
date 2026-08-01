@@ -80,6 +80,7 @@ export default function DashboardClient({
       }
     }, 0);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     return () => {
       window.clearTimeout(themeTimer);

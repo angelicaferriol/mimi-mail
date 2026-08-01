@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getSession, clearSession } from '@/lib/auth';
 
+export const runtime = 'edge';
+
 export async function POST() {
   try {
     const session = await getSession();
@@ -13,7 +15,7 @@ export async function POST() {
     }
 
     // Delete user from database (this will cascade delete all their messages)
-    db.prepare('DELETE FROM users WHERE id = ?').run(session.userId);
+    await db.run('DELETE FROM users WHERE id = ?', session.userId);
 
     // Clear user session cookie
     await clearSession();

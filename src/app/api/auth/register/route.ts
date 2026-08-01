@@ -4,13 +4,15 @@ import db from '@/lib/db';
 import { sendEmail } from '@/lib/mail';
 import { checkRateLimit } from '@/lib/rate-limit';
 
+export const runtime = 'edge';
+
 interface ExistingUserRow {
   id: number;
 }
 
 export async function POST(request: Request) {
   try {
-    const rateLimit = checkRateLimit(request, 'auth-register', 5, 60 * 60 * 1000);
+    const rateLimit = await checkRateLimit(request, 'auth-register', 5, 60 * 60 * 1000);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many registrations from this device. Please try again later.' },
@@ -36,7 +38,10 @@ export async function POST(request: Request) {
     }
 
     // Check if user already exists
-    const existingUser = db.prepare('SELECT id FROM users WHERE username = ? OR email = ?').get(cleanUsername, email.toLowerCase()) as ExistingUserRow | undefined;
+    const existingUser = await db.get<ExistingUserRow>(
+      'SELECT id FROM users WHERE username = ? OR email = ?',
+      cleanUsername, email.toLowerCase()
+    );
     if (existingUser) {
       return NextResponse.json(
         { error: 'Username or email already registered' },
@@ -52,9 +57,10 @@ export async function POST(request: Request) {
     const verificationPin = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Insert user
-    db.prepare(
-      'INSERT INTO users (username, email, password_hash, is_verified, verification_pin, verification_pin_created_at) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(cleanUsername, email.toLowerCase(), passwordHash, 0, verificationPin, new Date().toISOString());
+    await db.run(
+      'INSERT INTO users (username, email, password_hash, is_verified, verification_pin, verification_pin_created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      cleanUsername, email.toLowerCase(), passwordHash, 0, verificationPin, new Date().toISOString()
+    );
 
     // Send verification email
     await sendEmail({

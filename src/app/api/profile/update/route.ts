@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
+export const runtime = 'edge';
+
 export async function POST(request: Request) {
   try {
     const session = await getSession();
@@ -15,9 +17,8 @@ export async function POST(request: Request) {
     const { displayName, bio } = await request.json();
 
     // Update profile fields
-    db.prepare(
-      'UPDATE users SET display_name = ?, bio = ? WHERE id = ?'
-    ).run(
+    await db.run(
+      'UPDATE users SET display_name = ?, bio = ? WHERE id = ?',
       displayName ? displayName.trim() : null,
       bio ? bio.trim() : null,
       session.userId

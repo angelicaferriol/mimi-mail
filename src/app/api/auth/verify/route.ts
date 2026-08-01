@@ -3,6 +3,8 @@ import db from '@/lib/db';
 import { createSession } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 
+export const runtime = 'edge';
+
 const PIN_EXPIRY_MINUTES = 15;
 const MAX_PIN_ATTEMPTS = 5;
 
@@ -28,7 +30,7 @@ function pinExpired(createdAt: string | null | undefined) {
 
 export async function POST(request: Request) {
   try {
-    const rateLimit = checkRateLimit(request, 'auth-verify', 8, 15 * 60 * 1000);
+    const rateLimit = await checkRateLimit(request, 'auth-verify', 8, 15 * 60 * 1000);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many verification attempts. Please try again later.' },
@@ -49,7 +51,7 @@ export async function POST(request: Request) {
     const cleanPin = pin.trim();
 
     // Find user
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail) as VerificationUserRow | undefined;
+    const user = await db.get<VerificationUserRow>('SELECT * FROM users WHERE email = ?', cleanEmail);
 
     if (!user) {
       return NextResponse.json(
@@ -59,9 +61,10 @@ export async function POST(request: Request) {
     }
 
     if (!user.verification_pin || pinExpired(user.verification_pin_created_at)) {
-      db.prepare(
-        'UPDATE users SET verification_pin = NULL, verification_pin_created_at = NULL, verification_pin_attempts = 0 WHERE id = ?'
-      ).run(user.id);
+      await db.run(
+        'UPDATE users SET verification_pin = NULL, verification_pin_created_at = NULL, verification_pin_attempts = 0 WHERE id = ?',
+        user.id
+      );
       return NextResponse.json(
         { error: 'Verification code expired. Request a new one.' },
         { status: 400 }
@@ -70,9 +73,10 @@ export async function POST(request: Request) {
 
     const attempts = Number(user.verification_pin_attempts || 0);
     if (attempts >= MAX_PIN_ATTEMPTS) {
-      db.prepare(
-        'UPDATE users SET verification_pin = NULL, verification_pin_created_at = NULL, verification_pin_attempts = 0 WHERE id = ?'
-      ).run(user.id);
+      await db.run(
+        'UPDATE users SET verification_pin = NULL, verification_pin_created_at = NULL, verification_pin_attempts = 0 WHERE id = ?',
+        user.id
+      );
       return NextResponse.json(
         { error: 'Too many attempts. Request a new verification code.' },
         { status: 429 }
@@ -80,9 +84,10 @@ export async function POST(request: Request) {
     }
 
     if (user.verification_pin !== cleanPin) {
-      db.prepare(
-        'UPDATE users SET verification_pin_attempts = verification_pin_attempts + 1 WHERE id = ?'
-      ).run(user.id);
+      await db.run(
+        'UPDATE users SET verification_pin_attempts = verification_pin_attempts + 1 WHERE id = ?',
+        user.id
+      );
       return NextResponse.json(
         { error: 'Invalid verification code' },
         { status: 400 }
@@ -90,9 +95,10 @@ export async function POST(request: Request) {
     }
 
     // Update user status
-    db.prepare(
-      'UPDATE users SET is_verified = 1, verification_pin = NULL, verification_pin_created_at = NULL, verification_pin_attempts = 0, login_attempts = 0 WHERE id = ?'
-    ).run(user.id);
+    await db.run(
+      'UPDATE users SET is_verified = 1, verification_pin = NULL, verification_pin_created_at = NULL, verification_pin_attempts = 0, login_attempts = 0 WHERE id = ?',
+      user.id
+    );
 
     // Create session
     await createSession({
@@ -113,7 +119,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   // Resend PIN
   try {
-    const rateLimit = checkRateLimit(request, 'auth-verify-resend', 5, 15 * 60 * 1000);
+    const rateLimit = await checkRateLimit(request, 'auth-verify-resend', 5, 15 * 60 * 1000);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many resend attempts. Please try again later.' },
@@ -127,15 +133,16 @@ export async function PUT(request: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail) as VerificationUserRow | undefined;
+    const user = await db.get<VerificationUserRow>('SELECT * FROM users WHERE email = ?', cleanEmail);
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 400 });
     }
 
     const pin = Math.floor(100000 + Math.random() * 900000).toString();
-    db.prepare(
-      'UPDATE users SET verification_pin = ?, verification_pin_created_at = ?, verification_pin_attempts = 0 WHERE id = ?'
-    ).run(pin, new Date().toISOString(), user.id);
+    await db.run(
+      'UPDATE users SET verification_pin = ?, verification_pin_created_at = ?, verification_pin_attempts = 0 WHERE id = ?',
+      pin, new Date().toISOString(), user.id
+    );
 
     const { sendEmail } = await import('@/lib/mail');
     await sendEmail({

@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import db from '@/lib/db';
 import { checkRateLimit } from '@/lib/rate-limit';
 
+export const runtime = 'edge';
+
 const PIN_EXPIRY_MINUTES = 15;
 const MAX_PIN_ATTEMPTS = 5;
 
@@ -26,7 +28,7 @@ function pinExpired(createdAt: string | null | undefined) {
 
 export async function POST(request: Request) {
   try {
-    const rateLimit = checkRateLimit(request, 'auth-reset-password', 5, 15 * 60 * 1000);
+    const rateLimit = await checkRateLimit(request, 'auth-reset-password', 5, 15 * 60 * 1000);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many reset attempts. Please try again later.' },
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
     const cleanPin = pin.trim();
 
     // Find user
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail) as ResetUserRow | undefined;
+    const user = await db.get<ResetUserRow>('SELECT * FROM users WHERE email = ?', cleanEmail);
 
     if (!user) {
       return NextResponse.json(
@@ -57,9 +59,10 @@ export async function POST(request: Request) {
     }
 
     if (!user.reset_pin || pinExpired(user.reset_pin_created_at)) {
-      db.prepare(
-        'UPDATE users SET reset_pin = NULL, reset_pin_created_at = NULL, reset_pin_attempts = 0 WHERE id = ?'
-      ).run(user.id);
+      await db.run(
+        'UPDATE users SET reset_pin = NULL, reset_pin_created_at = NULL, reset_pin_attempts = 0 WHERE id = ?',
+        user.id
+      );
       return NextResponse.json(
         { error: 'Reset code expired. Request a new one.' },
         { status: 400 }
@@ -68,9 +71,10 @@ export async function POST(request: Request) {
 
     const attempts = Number(user.reset_pin_attempts || 0);
     if (attempts >= MAX_PIN_ATTEMPTS) {
-      db.prepare(
-        'UPDATE users SET reset_pin = NULL, reset_pin_created_at = NULL, reset_pin_attempts = 0 WHERE id = ?'
-      ).run(user.id);
+      await db.run(
+        'UPDATE users SET reset_pin = NULL, reset_pin_created_at = NULL, reset_pin_attempts = 0 WHERE id = ?',
+        user.id
+      );
       return NextResponse.json(
         { error: 'Too many attempts. Request a new reset code.' },
         { status: 429 }
@@ -78,9 +82,10 @@ export async function POST(request: Request) {
     }
 
     if (user.reset_pin !== cleanPin) {
-      db.prepare(
-        'UPDATE users SET reset_pin_attempts = reset_pin_attempts + 1 WHERE id = ?'
-      ).run(user.id);
+      await db.run(
+        'UPDATE users SET reset_pin_attempts = reset_pin_attempts + 1 WHERE id = ?',
+        user.id
+      );
       return NextResponse.json(
         { error: 'Invalid reset code' },
         { status: 400 }
@@ -92,9 +97,10 @@ export async function POST(request: Request) {
     const passwordHash = bcrypt.hashSync(password, salt);
 
     // Update password, clear reset PIN, clear login attempts
-    db.prepare(
-      'UPDATE users SET password_hash = ?, reset_pin = NULL, reset_pin_created_at = NULL, reset_pin_attempts = 0, login_attempts = 0 WHERE id = ?'
-    ).run(passwordHash, user.id);
+    await db.run(
+      'UPDATE users SET password_hash = ?, reset_pin = NULL, reset_pin_created_at = NULL, reset_pin_attempts = 0, login_attempts = 0 WHERE id = ?',
+      passwordHash, user.id
+    );
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

@@ -5,6 +5,8 @@ import { createSession } from '@/lib/auth';
 import { sendEmail } from '@/lib/mail';
 import { checkRateLimit } from '@/lib/rate-limit';
 
+export const runtime = 'edge';
+
 const PIN_EXPIRY_MINUTES = 15;
 
 interface AuthUserRow {
@@ -32,7 +34,7 @@ function pinExpired(createdAt: string | null | undefined) {
 
 export async function POST(request: Request) {
   try {
-    const rateLimit = checkRateLimit(request, 'auth-login', 10, 10 * 60 * 1000);
+    const rateLimit = await checkRateLimit(request, 'auth-login', 10, 10 * 60 * 1000);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many login attempts. Please try again later.' },
@@ -52,9 +54,10 @@ export async function POST(request: Request) {
     const cleanLoginId = loginId.trim().toLowerCase();
 
     // Find user
-    const user = db.prepare(
-      'SELECT * FROM users WHERE username = ? OR email = ?'
-    ).get(cleanLoginId, cleanLoginId) as AuthUserRow | undefined;
+    const user = await db.get<AuthUserRow>(
+      'SELECT * FROM users WHERE username = ? OR email = ?',
+      cleanLoginId, cleanLoginId
+    );
 
     if (!user) {
       return NextResponse.json(
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
     const validPassword = bcrypt.compareSync(password, user.password_hash);
     if (!validPassword) {
       const newAttempts = (user.login_attempts || 0) + 1;
-      db.prepare('UPDATE users SET login_attempts = ? WHERE id = ?').run(newAttempts, user.id);
+      await db.run('UPDATE users SET login_attempts = ? WHERE id = ?', newAttempts, user.id);
 
       return NextResponse.json(
         { 
@@ -85,9 +88,10 @@ export async function POST(request: Request) {
       let pin = user.verification_pin;
       if (!pin || pinExpired(user.verification_pin_created_at)) {
         pin = Math.floor(100000 + Math.random() * 900000).toString();
-        db.prepare(
-          'UPDATE users SET verification_pin = ?, verification_pin_created_at = ?, verification_pin_attempts = 0 WHERE id = ?'
-        ).run(pin, new Date().toISOString(), user.id);
+        await db.run(
+          'UPDATE users SET verification_pin = ?, verification_pin_created_at = ?, verification_pin_attempts = 0 WHERE id = ?',
+          pin, new Date().toISOString(), user.id
+        );
       }
 
       await sendEmail({
@@ -110,7 +114,7 @@ export async function POST(request: Request) {
     }
 
     // Reset login attempts
-    db.prepare('UPDATE users SET login_attempts = 0 WHERE id = ?').run(user.id);
+    await db.run('UPDATE users SET login_attempts = 0 WHERE id = ?', user.id);
 
     // Create session
     await createSession({

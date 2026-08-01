@@ -1,13 +1,5 @@
 import db from './db';
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS rate_limits (
-    key TEXT PRIMARY KEY,
-    count INTEGER NOT NULL,
-    reset_at INTEGER NOT NULL
-  );
-`);
-
 function getClientIp(request: Request) {
   const forwardedFor = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
@@ -19,7 +11,7 @@ function getClientIp(request: Request) {
   return realIp?.trim() || 'unknown';
 }
 
-export function checkRateLimit(
+export async function checkRateLimit(
   request: Request,
   scope: string,
   limit: number,
@@ -31,20 +23,21 @@ export function checkRateLimit(
   // Cleanup expired entries periodically (10% of requests)
   if (Math.random() < 0.1) {
     try {
-      db.prepare('DELETE FROM rate_limits WHERE reset_at <= ?').run(now);
+      await db.run('DELETE FROM rate_limits WHERE reset_at <= ?', now);
     } catch (e) {
       console.error('Rate limit cleanup error:', e);
     }
   }
 
   // Retrieve current rate limit status
-  const current = db.prepare('SELECT count, reset_at FROM rate_limits WHERE key = ?').get(key) as 
-    { count: number; reset_at: number } | undefined;
+  const current = await db.get<{ count: number; reset_at: number }>(
+    'SELECT count, reset_at FROM rate_limits WHERE key = ?',
+    key
+  );
 
   if (!current || current.reset_at <= now) {
     const resetAt = now + windowMs;
-    db.prepare('INSERT OR REPLACE INTO rate_limits (key, count, reset_at) VALUES (?, 1, ?)')
-      .run(key, resetAt);
+    await db.run('INSERT OR REPLACE INTO rate_limits (key, count, reset_at) VALUES (?, 1, ?)', key, resetAt);
     return { allowed: true as const, remaining: limit - 1, resetAt };
   }
 
@@ -53,7 +46,6 @@ export function checkRateLimit(
   }
 
   const nextCount = current.count + 1;
-  db.prepare('UPDATE rate_limits SET count = ? WHERE key = ?')
-    .run(nextCount, key);
+  await db.run('UPDATE rate_limits SET count = ? WHERE key = ?', nextCount, key);
   return { allowed: true as const, remaining: limit - nextCount, resetAt: current.reset_at };
 }

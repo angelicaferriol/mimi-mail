@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
+export const runtime = 'edge';
+
 interface MessageRow {
   id: number;
   recipient_id: number;
@@ -27,9 +29,10 @@ export async function POST(request: Request) {
     }
 
     // Verify ownership of the message
-    const message = db.prepare(
-      'SELECT id, recipient_id FROM messages WHERE id = ?'
-    ).get(messageId) as MessageRow | undefined;
+    const message = await db.get<MessageRow>(
+      'SELECT id, recipient_id FROM messages WHERE id = ?',
+      messageId
+    );
 
     if (!message) {
       return NextResponse.json(
@@ -46,9 +49,10 @@ export async function POST(request: Request) {
     }
 
     // Update with reply
-    db.prepare(
-      'UPDATE messages SET reply_text = ?, is_answered = 1, answered_at = CURRENT_TIMESTAMP WHERE id = ?'
-    ).run(replyText ? replyText.trim() : null, messageId);
+    await db.run(
+      'UPDATE messages SET reply_text = ?, is_answered = 1, answered_at = CURRENT_TIMESTAMP WHERE id = ?',
+      replyText ? replyText.trim() : null, messageId
+    );
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

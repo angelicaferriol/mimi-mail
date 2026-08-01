@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import ProfileClient from './ProfileClient';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 interface PageProps {
   params: Promise<{ username: string }>;
@@ -13,9 +14,10 @@ export default async function ProfilePage({ params }: PageProps) {
   const cleanUsername = username.toLowerCase();
 
   // Find user in database
-  const user = db.prepare(
-    'SELECT id, username, display_name, bio FROM users WHERE username = ?'
-  ).get(cleanUsername) as { id: number; username: string; display_name: string | null; bio: string | null } | undefined;
+  const user = await db.get<{ id: number; username: string; display_name: string | null; bio: string | null }>(
+    'SELECT id, username, display_name, bio FROM users WHERE username = ?',
+    cleanUsername
+  );
 
   if (!user) {
     return (
@@ -41,9 +43,10 @@ export default async function ProfilePage({ params }: PageProps) {
   }
 
   // Load answered messages
-  const answers = db.prepare(
-    'SELECT id, message_text, reply_text, created_at, answered_at FROM messages WHERE recipient_id = ? AND is_answered = 1 ORDER BY answered_at DESC'
-  ).all(user.id) as { id: number; message_text: string; reply_text: string; created_at: string; answered_at: string }[];
+  const answers = await db.all<{ id: number; message_text: string; reply_text: string; created_at: string; answered_at: string }>(
+    'SELECT id, message_text, reply_text, created_at, answered_at FROM messages WHERE recipient_id = ? AND is_answered = 1 ORDER BY answered_at DESC',
+    user.id
+  );
 
   const { toUtcIso } = await import('@/lib/date-utils');
 
