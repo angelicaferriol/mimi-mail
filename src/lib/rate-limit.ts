@@ -1,8 +1,13 @@
 import db from './db';
 
 function getClientIp(request: Request) {
+  const cfConnectingIp = request.headers.get('cf-connecting-ip');
   const forwardedFor = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
+
+  if (cfConnectingIp) {
+    return cfConnectingIp.trim();
+  }
 
   if (forwardedFor) {
     return forwardedFor.split(',')[0]?.trim() || 'unknown';

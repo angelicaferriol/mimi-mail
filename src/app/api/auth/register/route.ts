@@ -6,9 +6,6 @@ import { checkRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'edge';
 
-interface ExistingUserRow {
-  id: number;
-}
 
 export async function POST(request: Request) {
   try {

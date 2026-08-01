@@ -11,10 +11,5 @@
       "database_name": "mimi-mail-db",
       "database_id": "8e96877d-c1ed-45c9-b67a-2bc8b4e910b6"
     }
-  ],
-  "vars": {
-    "EMAIL_USER": "your-email@gmail.com",
-    "EMAIL_PASS": "your-gmail-app-password",
-    "JWT_SECRET": "your-jwt-secret"
-  }
+  ]
 }

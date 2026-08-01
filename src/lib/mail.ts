@@ -8,12 +8,12 @@ interface SendMailParams {
 }
 
 export async function sendEmail({ to, subject, text, html }: SendMailParams) {
-  let env: any = {};
+  let env: Record<string, string | undefined> = {};
   let isProduction = false;
   try {
     const context = getRequestContext();
     if (context?.env) {
-      env = context.env;
+      env = context.env as Record<string, string | undefined>;
       isProduction = true;
     }
   } catch {

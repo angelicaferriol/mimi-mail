@@ -1,4 +1,5 @@
 import { cookies as getCookies } from 'next/headers';
+import { getRequestContext } from '@cloudflare/next-on-pages';
 
 export interface UserSession {
   userId: number;
@@ -6,8 +7,21 @@ export interface UserSession {
   email: string;
 }
 
+export interface JwtPayload extends UserSession {
+  exp: number;
+}
+
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
+  let secret = process.env.JWT_SECRET;
+  try {
+    const context = getRequestContext();
+    const env = context?.env as Record<string, unknown> | undefined;
+    if (env?.JWT_SECRET) {
+      secret = env.JWT_SECRET as string;
+    }
+  } catch {
+    // Not in Cloudflare environment
+  }
   if (!secret) {
     throw new Error('JWT_SECRET environment variable is required');
   }
@@ -23,7 +37,7 @@ async function base64urlEncode(str: string): Promise<string> {
     .replace(/\//g, '_');
 }
 
-async function signJwt(payload: any, secret: string): Promise<string> {
+async function signJwt(payload: JwtPayload, secret: string): Promise<string> {
   const header = { alg: 'HS256', typ: 'JWT' };
   const encodedHeader = await base64urlEncode(JSON.stringify(header));
   const encodedPayload = await base64urlEncode(JSON.stringify(payload));
@@ -53,7 +67,7 @@ async function signJwt(payload: any, secret: string): Promise<string> {
   return `${tokenInput}.${signature}`;
 }
 
-async function verifyJwt(token: string, secret: string): Promise<any | null> {
+async function verifyJwt(token: string, secret: string): Promise<JwtPayload | null> {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
   
@@ -86,7 +100,7 @@ async function verifyJwt(token: string, secret: string): Promise<any | null> {
   const payloadStr = new TextDecoder().decode(
     Uint8Array.from(atob(encodedPayload.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))
   );
-  return JSON.parse(payloadStr);
+  return JSON.parse(payloadStr) as JwtPayload;
 }
 
 export async function createSession(user: UserSession) {
