@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "mimi-mail-db",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+      "database_id": "8e96877d-c1ed-45c9-b67a-2bc8b4e910b6"
     }
   ]
 }
