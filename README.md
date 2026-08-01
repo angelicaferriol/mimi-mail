@@ -18,9 +18,9 @@ Mimi Mail is a minimalist retro 90s-ui styled anonymous messaging board applicat
 ## Tech Stack
 
 * **Frontend & Backend**: [Next.js (App Router)](https://nextjs.org/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-* **Database**: [SQLite](https://www.sqlite.org/) (managed locally via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3))
+* **Database**: [SQLite](https://www.sqlite.org/) (managed locally via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) and in production via [Cloudflare D1 Database](https://developers.cloudflare.com/d1/))
 * **Styling**: Vanilla CSS for bespoke retro aesthetics
-* **Emails**: [Nodemailer](https://nodemailer.com/) (configured for Gmail SMTP)
+* **Emails**: [worker-mailer](https://github.com/zou-yu/worker-mailer) (for production Cloudflare Edge SMTP sending) and [Nodemailer](https://nodemailer.com/) (for local development SMTP)
 * **Encryption**: [Bcrypt.js](https://github.com/dcodeIO/bcrypt.js) for secure password hashing
 
 ---
@@ -53,10 +53,47 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 
 ---
 
+## Deployment on Cloudflare Pages
+
+Mimi Mail is designed to compile and run on the Cloudflare Edge runtime using Cloudflare Pages Functions and Cloudflare D1.
+
+### 1. Database Setup (Cloudflare D1)
+Create a D1 database named `mimi-mail-db` via the Cloudflare dashboard or wrangler:
+```bash
+npx wrangler d1 create mimi-mail-db
+```
+Link the generated database ID in `wrangler.json` under `d1_databases`.
+
+### 2. Initialize the Database Schema
+Apply the database schema to your production D1 instance:
+```bash
+npx wrangler d1 execute mimi-mail-db --remote --file=schema.sql
+```
+
+### 3. Configure Production Secrets
+Set the production environment variables in `wrangler.json` under `"vars"` or through the Cloudflare Pages settings dashboard:
+- `EMAIL_USER`
+- `EMAIL_PASS`
+- `JWT_SECRET`
+
+### 4. Build and Deploy
+Build the project using next-on-pages and deploy:
+```bash
+# Build
+npm run build:pages
+
+# Deploy
+npx wrangler pages deploy .vercel/output/static --project-name mimi-mail --commit-dirty=true
+```
+
+---
+
 ## Project Structure
 
 ```text
 ├── public/                 # Static assets
+├── schema.sql              # Cloudflare D1 SQL schema script
+├── wrangler.json           # Cloudflare Pages and D1 configuration
 ├── src/
 │   ├── app/                # Next.js App Router (Pages, Components & APIs)
 │   │   ├── api/            # Authentication, Messages, and Contact endpoints
@@ -66,8 +103,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 │   │   └── globals.css     # CSS variable themes and layout styling
 │   ├── lib/                # Shared utilities
 │   │   ├── auth.ts         # JWT Session Creation & Verification
-│   │   ├── db.ts           # SQLite connection & table schemas
-│   │   ├── mail.ts         # SMTP Nodemailer transport
-│   │   ├── rate-limit.ts   # SQLite sliding-window rate limit checks
-│   │   └── date-utils.ts   # SQLite UTC timezone normalization
+│   │   ├── db.ts           # SQLite connection with D1 fallback
+│   │   ├── mail.ts         # worker-mailer (edge) and Nodemailer (dev) transport
+│   │   ├── rate-limit.ts   # Sliding-window rate limit checks
+│   │   └── date-utils.ts   # UTC timezone normalization
+```
 ```
