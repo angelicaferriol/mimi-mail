@@ -33,11 +33,8 @@ export default function ProfileClient({
   // Toggle view state between sending note and seeing answers
   const [showAnswers, setShowAnswers] = useState(false);
 
-  const [mounted, setMounted] = useState(false);
-
   // Load theme on mount
   useEffect(() => {
-    setMounted(true);
     const savedTheme = localStorage.getItem("mimi-theme") || "theme-peach";
     const savedDark = localStorage.getItem("mimi-dark") === "true";
     document.body.className = `${savedTheme} ${savedDark ? "dark-mode" : ""}`;
@@ -64,8 +61,8 @@ export default function ProfileClient({
       setSuccess("Your anonymous note was dropped successfully!");
       setMessageText("");
       setTimeout(() => setSuccess(""), 5000);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Failed to send message");
     } finally {
       setSubmitting(false);
     }
@@ -76,7 +73,8 @@ export default function ProfileClient({
       {/* Header/Navbar */}
       <header className="taskbar" style={{ maxWidth: "450px" }}>
         <div className="logo-container">
-          <span className="logo-text">Mini Mail</span>
+          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+          <span className="logo-text">Mimi Mail</span>
         </div>
         <div className="nav-links">
           <button 
@@ -101,9 +99,11 @@ export default function ProfileClient({
                 </div>
               </div>
               <div className="window-body">
-                <p style={{ fontSize: "13px", marginBottom: "16px", fontWeight: 500, textAlign: "center", color: "#6E6865", lineHeight: "1.5" }}>
-                  {bio || `Leave a sweet, funny, or anonymous note for ${displayName || username}! It is 100% anonymous.`}
-                </p>
+                {bio && (
+                  <p style={{ fontSize: "13px", marginBottom: "16px", fontWeight: 500, textAlign: "center", color: "#6E6865", lineHeight: "1.5" }}>
+                    {bio}
+                  </p>
+                )}
 
                 {error && (
                   <div className="retro-window" style={{ border: "1.5px solid #D9534F", marginBottom: "16px", boxShadow: "none" }}>
@@ -176,7 +176,7 @@ export default function ProfileClient({
                 
                 {initialAnswers.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "32px 0", color: "#8A8480", fontSize: "13px", fontWeight: 500 }}>
-                    {displayName || username} hasn't answered any letters yet. Check back later!
+                    {displayName || username} hasn&apos;t answered any letters yet. Check back later!
                   </div>
                 ) : (
                   initialAnswers.map(ans => (
@@ -189,7 +189,7 @@ export default function ProfileClient({
                       {/* Question Content */}
                       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                         <div className="message-text" style={{ fontSize: "15px", margin: 0 }}>“{ans.message_text}”</div>
-                        <span style={{ fontSize: "11px", color: "#8A8480" }}>Asked: {mounted ? new Date(ans.created_at).toLocaleString() : ""}</span>
+                        <span style={{ fontSize: "11px", color: "#8A8480" }}>Asked: {new Date(ans.created_at).toLocaleString()}</span>
                       </div>
 
                       {/* Answer Section */}
@@ -207,7 +207,7 @@ export default function ProfileClient({
                           </span>
                           <span style={{ fontSize: "14px", fontWeight: 500, color: "#2C221E" }}>{ans.reply_text}</span>
                         </div>
-                        <span style={{ fontSize: "11px", color: "#8A8480" }}>Answered: {mounted ? new Date(ans.answered_at).toLocaleString() : ""}</span>
+                        <span style={{ fontSize: "11px", color: "#8A8480" }}>Answered: {new Date(ans.answered_at).toLocaleString()}</span>
                       </div>
                     </div>
                   ))
@@ -232,6 +232,7 @@ export default function ProfileClient({
         <div className="footer-links">
           <a href="/about" className="footer-link">About Us</a>
           <a href="/terms" className="footer-link">Terms</a>
+          <a href="/contact" className="footer-link">Contact Us</a>
         </div>
       </footer>
     </main>

@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 export const metadata = {
   title: "Terms of Service | Mimi Mail",
@@ -11,12 +12,13 @@ export default function TermsPage() {
       {/* Header/Navbar */}
       <header className="taskbar" style={{ maxWidth: "600px" }}>
         <div className="logo-container">
-          <span className="logo-text">Mini Mail</span>
+          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+          <span className="logo-text">Mimi Mail</span>
         </div>
         <div className="nav-links">
-          <a href="/" className="retro-btn btn-white" style={{ padding: "5px 12px", fontSize: "12px" }}>
+          <Link href="/" className="retro-btn btn-white" style={{ padding: "5px 12px", fontSize: "12px" }}>
             Back Home
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -54,7 +56,7 @@ export default function TermsPage() {
         <div className="footer-links">
           <a href="/about" className="footer-link">About Us</a>
           <a href="/terms" className="footer-link">Terms</a>
-          <a href="/" className="footer-link">Home</a>
+          <a href="/contact" className="footer-link">Contact Us</a>
         </div>
       </footer>
     </main>

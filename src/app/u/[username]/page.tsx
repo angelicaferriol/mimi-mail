@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import db from '@/lib/db';
 import ProfileClient from './ProfileClient';
 
@@ -14,7 +15,7 @@ export default async function ProfilePage({ params }: PageProps) {
   // Find user in database
   const user = db.prepare(
     'SELECT id, username, display_name, bio FROM users WHERE username = ?'
-  ).get(cleanUsername) as any;
+  ).get(cleanUsername) as { id: number; username: string; display_name: string | null; bio: string | null } | undefined;
 
   if (!user) {
     return (
@@ -30,9 +31,9 @@ export default async function ProfilePage({ params }: PageProps) {
             <p style={{ fontSize: "14px", color: "#6E6865", marginBottom: "20px", fontWeight: 500 }}>
               The profile folder for <strong>u/{username}</strong> does not exist on our servers!
             </p>
-            <a href="/" className="retro-btn btn-white" style={{ display: "inline-block" }}>
+            <Link href="/" className="retro-btn btn-white" style={{ display: "inline-block" }}>
               Go Back Home
-            </a>
+            </Link>
           </div>
         </section>
       </main>
@@ -42,15 +43,17 @@ export default async function ProfilePage({ params }: PageProps) {
   // Load answered messages
   const answers = db.prepare(
     'SELECT id, message_text, reply_text, created_at, answered_at FROM messages WHERE recipient_id = ? AND is_answered = 1 ORDER BY answered_at DESC'
-  ).all(user.id) as any[];
+  ).all(user.id) as { id: number; message_text: string; reply_text: string; created_at: string; answered_at: string }[];
+
+  const { toUtcIso } = await import('@/lib/date-utils');
 
   // Normalize JSON dates and variables for Client Component
   const serializedAnswers = answers.map(ans => ({
     id: ans.id,
     message_text: ans.message_text,
     reply_text: ans.reply_text,
-    created_at: ans.created_at,
-    answered_at: ans.answered_at,
+    created_at: toUtcIso(ans.created_at) || '',
+    answered_at: toUtcIso(ans.answered_at) || '',
   }));
 
   return (

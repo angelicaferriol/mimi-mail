@@ -3,6 +3,20 @@ import { getSession } from '@/lib/auth';
 import db from '@/lib/db';
 import DashboardClient from './DashboardClient';
 
+interface MessageRow {
+  id: number;
+  message_text: string;
+  reply_text: string | null;
+  is_answered: number;
+  created_at: string;
+  answered_at: string | null;
+}
+
+interface UserRow {
+  display_name: string | null;
+  bio: string | null;
+}
+
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
@@ -15,7 +29,9 @@ export default async function DashboardPage() {
   // Fetch all messages for the current user, newest first
   const messages = db.prepare(
     'SELECT id, message_text, reply_text, is_answered, created_at, answered_at FROM messages WHERE recipient_id = ? ORDER BY created_at DESC'
-  ).all(session.userId) as any[];
+  ).all(session.userId) as MessageRow[];
+
+  const { toUtcIso } = await import('@/lib/date-utils');
 
   // Normalize JSON dates and variables for Client Component
   const serializedMessages = messages.map(msg => ({
@@ -23,14 +39,14 @@ export default async function DashboardPage() {
     message_text: msg.message_text,
     reply_text: msg.reply_text,
     is_answered: msg.is_answered,
-    created_at: msg.created_at,
-    answered_at: msg.answered_at,
+    created_at: toUtcIso(msg.created_at) || '',
+    answered_at: toUtcIso(msg.answered_at),
   }));
 
   // Fetch user settings
   const user = db.prepare(
     'SELECT display_name, bio FROM users WHERE id = ?'
-  ).get(session.userId) as any;
+  ).get(session.userId) as UserRow | undefined;
 
   return (
     <DashboardClient 

@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
+interface MessageRow {
+  id: number;
+  recipient_id: number;
+}
+
 export async function POST(request: Request) {
   try {
     const session = await getSession();
@@ -23,8 +28,8 @@ export async function POST(request: Request) {
 
     // Verify ownership of the message
     const message = db.prepare(
-      'SELECT * FROM messages WHERE id = ?'
-    ).get(messageId) as any;
+      'SELECT id, recipient_id FROM messages WHERE id = ?'
+    ).get(messageId) as MessageRow | undefined;
 
     if (!message) {
       return NextResponse.json(
@@ -44,7 +49,7 @@ export async function POST(request: Request) {
     db.prepare('DELETE FROM messages WHERE id = ?').run(messageId);
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Message deletion error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },

@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Mimi Mail",
   description: "Share your page, receive anonymous cute notes from your friends and visitors, and reply directly in a retro-90s desktop style!",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -13,6 +16,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/icon.png" type="image/png" />
+      </head>
       <body suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{

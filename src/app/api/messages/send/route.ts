@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 
+interface RecipientRow {
+  id: number;
+}
+
 export async function POST(request: Request) {
   try {
     const { username, messageText } = await request.json();
@@ -20,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     // Find recipient user
-    const user = db.prepare('SELECT id FROM users WHERE username = ?').get(username.trim().toLowerCase()) as any;
+    const user = db.prepare('SELECT id FROM users WHERE username = ?').get(username.trim().toLowerCase()) as RecipientRow | undefined;
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -34,7 +38,7 @@ export async function POST(request: Request) {
     ).run(user.id, messageText.trim());
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Message send error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },

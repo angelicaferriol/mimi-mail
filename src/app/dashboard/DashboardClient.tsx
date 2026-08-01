@@ -32,6 +32,7 @@ export default function DashboardClient({
   const [replyText, setReplyText] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
   const [submittingReply, setSubmittingReply] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   // Theme state
   const [theme, setTheme] = useState("theme-peach");
@@ -63,15 +64,33 @@ export default function DashboardClient({
     onConfirm: () => {}
   });
 
-  const [mounted, setMounted] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   // Load and sync theme on mount
   useEffect(() => {
-    setMounted(true);
     const savedTheme = localStorage.getItem("mimi-theme") || "theme-peach";
-    setTheme(savedTheme);
     document.body.className = savedTheme;
+    const themeTimer = window.setTimeout(() => setTheme(savedTheme), 0);
+
+    // Show tutorial if not dismissed
+    const dismissed = localStorage.getItem("mimi_tutorial_dismissed");
+    const tutorialTimer = window.setTimeout(() => {
+      if (!dismissed) {
+        setShowTutorial(true);
+      }
+    }, 0);
+
+    setMounted(true);
+    return () => {
+      window.clearTimeout(themeTimer);
+      window.clearTimeout(tutorialTimer);
+    };
   }, []);
+
+  const dismissTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem("mimi_tutorial_dismissed", "true");
+  };
 
   const changeTheme = (newTheme: string) => {
     setTheme(newTheme);
@@ -82,7 +101,11 @@ export default function DashboardClient({
   const [sharingLink, setSharingLink] = useState("");
 
   useEffect(() => {
-    setSharingLink(`${window.location.protocol}//${window.location.host}/u/${username}`);
+    const timer = window.setTimeout(() => {
+      setSharingLink(`${window.location.protocol}//${window.location.host}/u/${username}`);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [username]);
 
   const handleCopy = () => {
@@ -117,8 +140,8 @@ export default function DashboardClient({
       if (!res.ok) throw new Error("Failed to delete account");
       router.push("/");
       router.refresh();
-    } catch (err: any) {
-      alert(err.message || "An error occurred during account deletion.");
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : "An error occurred during account deletion.");
       setDeletingAccount(false);
     }
   };
@@ -143,8 +166,8 @@ export default function DashboardClient({
       setMessages(prev => prev.filter(m => m.id !== messageId));
       setAnswerSuccess("Note deleted successfully.");
       setTimeout(() => setAnswerSuccess(""), 5000);
-    } catch (err: any) {
-      alert(err.message || "An error occurred while deleting the note.");
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : "An error occurred while deleting the note.");
     }
   };
 
@@ -171,8 +194,10 @@ export default function DashboardClient({
       if (!res.ok) throw new Error("Failed to update profile settings");
       setProfileSuccess("Profile updated successfully!");
       router.refresh();
-    } catch (err: any) {
-      setProfileError(err.message);
+      setTimeout(() => setProfileSuccess(""), 3000);
+    } catch (error: unknown) {
+      setProfileError(error instanceof Error ? error.message : "Failed to update profile settings");
+      setTimeout(() => setProfileError(""), 3000);
     } finally {
       setSavingProfile(false);
     }
@@ -208,7 +233,7 @@ export default function DashboardClient({
       setAnswerSuccess("Your answer has been posted successfully!");
       // Auto-hide alert after 5 seconds
       setTimeout(() => setAnswerSuccess(""), 5000);
-    } catch (err) {
+    } catch {
       alert("Error saving reply. Please try again.");
     } finally {
       setSubmittingReply(false);
@@ -226,7 +251,8 @@ export default function DashboardClient({
       {/* Navbar Header */}
       <header className="taskbar" style={{ maxWidth: "600px" }}>
         <div className="logo-container">
-          <span className="logo-text">Mini Mail</span>
+          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+          <span className="logo-text">Mimi Mail</span>
         </div>
         <div className="nav-links">
           <button 
@@ -243,7 +269,42 @@ export default function DashboardClient({
         </div>
       </header>
 
-      <div style={{ width: "100%", maxWidth: "600px", display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div style={{ width: "100%", maxWidth: "600px", display: "flex", flexDirection: "column", gap: "20px" }}>
+        {!showSettings && (showTutorial || messages.length === 0) && (
+          <div style={{ 
+            border: "1.5px dashed var(--border-color)", 
+            borderRadius: "12px", 
+            padding: "12px 16px", 
+            position: "relative",
+            backgroundColor: "#FAF7F4",
+            marginBottom: "10px"
+          }}>
+            <button 
+              onClick={dismissTutorial}
+              style={{ 
+                position: "absolute",
+                right: "12px",
+                top: "10px",
+                background: "none", 
+                border: "none", 
+                cursor: "pointer", 
+                fontWeight: "bold", 
+                fontSize: "14px", 
+                color: "#8A8480"
+              }}
+              title="Close guide"
+            >
+              ✕
+            </button>
+            <h3 style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px", color: "var(--border-color)" }}>
+              Welcome to Mimi Mail!
+            </h3>
+            <p style={{ fontSize: "12px", color: "var(--text-muted, #6E6865)", lineHeight: 1.4, fontWeight: 500, paddingRight: "20px" }}>
+              To start receiving anonymous messages, click the <strong>Settings</strong> button above, copy your personal sharing link, and share it with your friends!
+            </p>
+          </div>
+        )}
+
         {/* Consolidated Profile & Settings Panel (Exclusive View) */}
         {showSettings ? (
           <section className="retro-window">
@@ -276,13 +337,17 @@ export default function DashboardClient({
               <form onSubmit={handleProfileUpdate} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <h3 style={{ fontSize: "14px", fontWeight: 700 }}>Edit Profile Details</h3>
                 {profileSuccess && (
-                  <div style={{ fontSize: "12px", color: "#5CB85C", fontWeight: 600 }}>
-                    {profileSuccess}
+                  <div className="retro-window" style={{ border: "1.5px solid #5CB85C", boxShadow: "none" }}>
+                    <div className="window-body" style={{ padding: "10px 14px", fontSize: "13px", backgroundColor: "#F7FDF7", color: "#5CB85C", fontWeight: 600 }}>
+                      {profileSuccess}
+                    </div>
                   </div>
                 )}
                 {profileError && (
-                  <div style={{ fontSize: "12px", color: "#D9534F", fontWeight: 600 }}>
-                    {profileError}
+                  <div className="retro-window" style={{ border: "1.5px solid #D9534F", boxShadow: "none" }}>
+                    <div className="window-body" style={{ padding: "10px 14px", fontSize: "13px", backgroundColor: "#FDF7F7", color: "#D9534F", fontWeight: 600 }}>
+                      Error: {profileError}
+                    </div>
                   </div>
                 )}
                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -433,9 +498,22 @@ export default function DashboardClient({
                       <button 
                         onClick={() => triggerDeleteMessageConfirm(msg.id)} 
                         className="retro-btn btn-white"
-                        style={{ padding: "4px 10px", fontSize: "11px", color: "#D9534F", borderColor: "#D9534F" }}
+                        style={{ 
+                          padding: "6px 8px", 
+                          color: "#D9534F", 
+                          borderColor: "#D9534F",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center"
+                        }}
+                        title="Delete Note"
                       >
-                        Delete
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
                       </button>
                     </div>
 
@@ -571,6 +649,7 @@ export default function DashboardClient({
         <div className="footer-links">
           <a href="/about" className="footer-link">About Us</a>
           <a href="/terms" className="footer-link">Terms</a>
+          <a href="/contact" className="footer-link">Contact Us</a>
         </div>
       </footer>
     </main>

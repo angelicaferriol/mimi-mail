@@ -4,7 +4,7 @@ import path from 'path';
 // Define DB file location inside the project directory
 const dbPath = path.join(process.cwd(), 'mimi_mail.db');
 
-const db = new Database(dbPath, { verbose: console.log });
+const db = new Database(dbPath);
 
 // Initialize database schema
 db.exec(`
@@ -22,12 +22,52 @@ db.exec(`
 // Safe migrations for existing databases
 try {
   db.exec("ALTER TABLE users ADD COLUMN display_name TEXT;");
-} catch (e) {
+} catch {
   // Column already exists
 }
 try {
   db.exec("ALTER TABLE users ADD COLUMN bio TEXT;");
-} catch (e) {
+} catch {
+  // Column already exists
+}
+try {
+  db.exec("ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0;");
+} catch {
+  // Column already exists
+}
+try {
+  db.exec("ALTER TABLE users ADD COLUMN verification_pin TEXT;");
+} catch {
+  // Column already exists
+}
+try {
+  db.exec("ALTER TABLE users ADD COLUMN verification_pin_created_at TIMESTAMP;");
+} catch {
+  // Column already exists
+}
+try {
+  db.exec("ALTER TABLE users ADD COLUMN verification_pin_attempts INTEGER DEFAULT 0;");
+} catch {
+  // Column already exists
+}
+try {
+  db.exec("ALTER TABLE users ADD COLUMN login_attempts INTEGER DEFAULT 0;");
+} catch {
+  // Column already exists
+}
+try {
+  db.exec("ALTER TABLE users ADD COLUMN reset_pin TEXT;");
+} catch {
+  // Column already exists
+}
+try {
+  db.exec("ALTER TABLE users ADD COLUMN reset_pin_created_at TIMESTAMP;");
+} catch {
+  // Column already exists
+}
+try {
+  db.exec("ALTER TABLE users ADD COLUMN reset_pin_attempts INTEGER DEFAULT 0;");
+} catch {
   // Column already exists
 }
 
@@ -42,6 +82,10 @@ db.exec(`
     answered_at TIMESTAMP,
     FOREIGN KEY (recipient_id) REFERENCES users (id) ON DELETE CASCADE
   );
+`);
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_messages_recipient_id ON messages (recipient_id);
 `);
 
 export default db;

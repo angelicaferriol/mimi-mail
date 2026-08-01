@@ -19,7 +19,7 @@ export async function POST() {
     await clearSession();
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Account deletion error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },

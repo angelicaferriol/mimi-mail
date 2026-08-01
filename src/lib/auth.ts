@@ -10,10 +10,7 @@ export interface UserSession {
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('JWT_SECRET environment variable is required in production!');
-    }
-    return 'super-secret-mimi-key-123';
+    throw new Error('JWT_SECRET environment variable is required');
   }
   return secret;
 }
@@ -40,7 +37,7 @@ export async function getSession(): Promise<UserSession | null> {
     const secret = getJwtSecret();
     const decoded = jwt.verify(sessionCookie.value, secret) as UserSession;
     return decoded;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
