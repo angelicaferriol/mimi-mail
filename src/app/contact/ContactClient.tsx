@@ -54,7 +54,7 @@ export default function ContactClient() {
       {/* Header/Navbar */}
       <header className="taskbar" style={{ maxWidth: "500px" }}>
         <div className="logo-container">
-          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
           <span className="logo-text" onClick={() => router.push("/")} style={{ cursor: "pointer" }}>
             Mimi Mail
           </span>
@@ -127,6 +127,9 @@ export default function ContactClient() {
                 disabled={isLoading}
                 style={{ resize: "none" }}
               />
+              <div style={{ textAlign: "right", fontSize: "11px", color: "#8A8480", marginTop: "4px" }}>
+                {message.length}/1000 characters
+              </div>
             </div>
 
             <button

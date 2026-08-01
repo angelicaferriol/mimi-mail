@@ -251,7 +251,7 @@ export default function DashboardClient({
       {/* Navbar Header */}
       <header className="taskbar" style={{ maxWidth: "600px" }}>
         <div className="logo-container">
-          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
           <span className="logo-text">Mimi Mail</span>
         </div>
         <div className="nav-links">
@@ -490,11 +490,13 @@ export default function DashboardClient({
                   No {filter === "all" ? "" : filter} messages.
                 </div>
               ) : (
-                filteredMessages.map(msg => (
-                  <div key={msg.id} className="message-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    {/* Top Row: Note ID header and Delete Action */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--border-color)" }}>Anonymous Note #{msg.id}</span>
+                filteredMessages.map(msg => {
+                  const noteNumber = messages.length - messages.findIndex(m => m.id === msg.id);
+                  return (
+                    <div key={msg.id} className="message-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {/* Top Row: Note ID header and Delete Action */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--border-color)" }}>Anonymous Note #{noteNumber}</span>
                       <button 
                         onClick={() => triggerDeleteMessageConfirm(msg.id)} 
                         className="retro-btn btn-white"
@@ -557,12 +559,16 @@ export default function DashboardClient({
                               required
                               disabled={submittingReply}
                             />
-                            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                              <button 
-                                type="button" 
-                                onClick={() => { setReplyingTo(null); setReplyText(""); }} 
-                                className="retro-btn btn-white"
-                                style={{ padding: "5px 10px", fontSize: "11px" }}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                              <span style={{ fontSize: "11px", color: "#8A8480" }}>
+                                {replyText.length}/500 characters
+                              </span>
+                              <div style={{ display: "flex", gap: "8px" }}>
+                                <button 
+                                  type="button" 
+                                  onClick={() => { setReplyingTo(null); setReplyText(""); }} 
+                                  className="retro-btn btn-white"
+                                  style={{ padding: "5px 10px", fontSize: "11px" }}
                                 disabled={submittingReply}
                               >
                                 Cancel
@@ -576,7 +582,8 @@ export default function DashboardClient({
                                 {submittingReply ? "Posting..." : "Post Answer"}
                               </button>
                             </div>
-                          </form>
+                          </div>
+                        </form>
                         ) : (
                           <button 
                             onClick={() => { setReplyingTo(msg.id); setReplyText(""); }} 
@@ -588,8 +595,9 @@ export default function DashboardClient({
                         )}
                       </div>
                     )}
-                  </div>
-                ))
+                    </div>
+                  );
+                })
               )}
             </div>
           </section>

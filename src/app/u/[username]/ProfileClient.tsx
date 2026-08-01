@@ -73,7 +73,7 @@ export default function ProfileClient({
       {/* Header/Navbar */}
       <header className="taskbar" style={{ maxWidth: "450px" }}>
         <div className="logo-container">
-          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
           <span className="logo-text">Mimi Mail</span>
         </div>
         <div className="nav-links">
@@ -134,6 +134,9 @@ export default function ProfileClient({
                       disabled={submitting}
                       style={{ resize: "none" }}
                     />
+                    <div style={{ textAlign: "right", fontSize: "11px", color: "#8A8480", marginTop: "4px" }}>
+                      {messageText.length}/500 characters
+                    </div>
                   </div>
 
                   <button 
@@ -179,38 +182,41 @@ export default function ProfileClient({
                     {displayName || username} hasn&apos;t answered any letters yet. Check back later!
                   </div>
                 ) : (
-                  initialAnswers.map(ans => (
-                    <div key={ans.id} className="message-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                      {/* Top Row: Note ID header */}
-                      <div>
-                        <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--border-color)" }}>Anonymous Note #{ans.id}</span>
-                      </div>
-
-                      {/* Question Content */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <div className="message-text" style={{ fontSize: "15px", margin: 0 }}>“{ans.message_text}”</div>
-                        <span style={{ fontSize: "11px", color: "#8A8480" }}>Asked: {new Date(ans.created_at).toLocaleString()}</span>
-                      </div>
-
-                      {/* Answer Section */}
-                      <div style={{ 
-                        borderLeft: "3.5px solid var(--accent-primary)", 
-                        paddingLeft: "12px", 
-                        marginTop: "4px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "2px"
-                      }}>
+                  initialAnswers.map(ans => {
+                    const noteNumber = initialAnswers.length - initialAnswers.findIndex(a => a.id === ans.id);
+                    return (
+                      <div key={ans.id} className="message-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {/* Top Row: Note ID header */}
                         <div>
-                          <span style={{ fontWeight: 800, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#7A706B", marginRight: "8px" }}>
-                            {displayName || username}:
-                          </span>
-                          <span style={{ fontSize: "14px", fontWeight: 500, color: "#2C221E" }}>{ans.reply_text}</span>
+                          <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--border-color)" }}>Anonymous Note #{noteNumber}</span>
                         </div>
-                        <span style={{ fontSize: "11px", color: "#8A8480" }}>Answered: {new Date(ans.answered_at).toLocaleString()}</span>
+
+                        {/* Question Content */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                          <div className="message-text" style={{ fontSize: "15px", margin: 0 }}>“{ans.message_text}”</div>
+                          <span style={{ fontSize: "11px", color: "#8A8480" }}>Asked: {new Date(ans.created_at).toLocaleString()}</span>
+                        </div>
+
+                        {/* Answer Section */}
+                        <div style={{ 
+                          borderLeft: "3.5px solid var(--accent-primary)", 
+                          paddingLeft: "12px", 
+                          marginTop: "4px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "2px"
+                        }}>
+                          <div>
+                            <span style={{ fontWeight: 800, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#7A706B", marginRight: "8px" }}>
+                              {displayName || username}:
+                            </span>
+                            <span style={{ fontSize: "14px", fontWeight: 500, color: "#2C221E" }}>{ans.reply_text}</span>
+                          </div>
+                          <span style={{ fontSize: "11px", color: "#8A8480" }}>Answered: {new Date(ans.answered_at).toLocaleString()}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </section>

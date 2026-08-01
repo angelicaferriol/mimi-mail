@@ -207,7 +207,7 @@ export default function LandingPage() {
       {/* Header/Navbar */}
       <header className="taskbar" style={{ maxWidth: "420px" }}>
         <div className="logo-container">
-          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
           <h1 className="logo-text">Mimi Mail</h1>
         </div>
         <div className="nav-links">

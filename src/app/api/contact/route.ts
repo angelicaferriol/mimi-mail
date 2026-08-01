@@ -16,6 +16,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (message.trim().length > 1000) {
+      return NextResponse.json(
+        { error: 'Message cannot exceed 1000 characters' },
+        { status: 400 }
+      );
+    }
+
     const emailUser = process.env.EMAIL_USER;
     const emailPass = process.env.EMAIL_PASS;
 

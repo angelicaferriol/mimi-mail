@@ -12,7 +12,7 @@ export default function TermsPage() {
       {/* Header/Navbar */}
       <header className="taskbar" style={{ maxWidth: "600px" }}>
         <div className="logo-container">
-          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
           <span className="logo-text">Mimi Mail</span>
         </div>
         <div className="nav-links">
