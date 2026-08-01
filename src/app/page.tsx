@@ -248,7 +248,7 @@ export default function LandingPage() {
           {error && (
             <div className="retro-window" style={{ border: "1.5px solid #D9534F", marginBottom: "16px", boxShadow: "none" }}>
               <div className="window-body" style={{ padding: "10px 14px", fontSize: "13px", backgroundColor: "#FDF7F7", fontWeight: 500 }}>
-                Error: {error}
+                {error}
               </div>
             </div>
           )}

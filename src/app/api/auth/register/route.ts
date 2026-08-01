@@ -38,13 +38,25 @@ export async function POST(request: Request) {
     }
 
     // Check if user already exists
-    const existingUser = await db.get<ExistingUserRow>(
-      'SELECT id FROM users WHERE username = ? OR email = ?',
+    const existingUser = await db.get<{ username: string; email: string }>(
+      'SELECT username, email FROM users WHERE username = ? OR email = ?',
       cleanUsername, email.toLowerCase()
     );
     if (existingUser) {
+      const isUsernameTaken = existingUser.username.toLowerCase() === cleanUsername;
+      const isEmailTaken = existingUser.email.toLowerCase() === email.toLowerCase();
+      
+      let errorMsg = 'Username or email already registered';
+      if (isUsernameTaken && isEmailTaken) {
+        errorMsg = 'Both username and email are already registered';
+      } else if (isUsernameTaken) {
+        errorMsg = 'Username is already taken';
+      } else if (isEmailTaken) {
+        errorMsg = 'Email is already registered';
+      }
+
       return NextResponse.json(
-        { error: 'Username or email already registered' },
+        { error: errorMsg },
         { status: 400 }
       );
     }

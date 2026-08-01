@@ -347,10 +347,11 @@ export default function DashboardClient({
                 {profileError && (
                   <div className="retro-window" style={{ border: "1.5px solid #D9534F", boxShadow: "none" }}>
                     <div className="window-body" style={{ padding: "10px 14px", fontSize: "13px", backgroundColor: "#FDF7F7", color: "#D9534F", fontWeight: 600 }}>
-                      Error: {profileError}
+                      {profileError}
                     </div>
                   </div>
                 )}
+
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Display Name</label>
                   <input 
