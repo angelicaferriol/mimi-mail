@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import db from '@/lib/db';
 import ThemeSync from './ThemeSync';
 
+export const runtime = 'edge';
+
 interface NotePageProps {
   params: Promise<{ id: string }>;
 }
