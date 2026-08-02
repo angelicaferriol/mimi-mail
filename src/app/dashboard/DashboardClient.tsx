@@ -53,6 +53,9 @@ export default function DashboardClient({
   // Success alert for answering a note
   const [answerSuccess, setAnswerSuccess] = useState("");
 
+  // Share note modal state
+  const [sharingNote, setSharingNote] = useState<Message | null>(null);
+
   // Custom confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -260,7 +263,7 @@ export default function DashboardClient({
   return (
     <main className="desktop">
       {/* Navbar Header */}
-      <header className="taskbar" style={{ maxWidth: "600px" }}>
+      <header className="taskbar" style={{ maxWidth: "480px" }}>
         <div className="logo-container">
           <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
           <span className="logo-text">Mimi Mail</span>
@@ -280,7 +283,7 @@ export default function DashboardClient({
         </div>
       </header>
 
-      <div style={{ width: "100%", maxWidth: "600px", display: "flex", flexDirection: "column", gap: "20px" }}>
+      <div style={{ width: "100%", maxWidth: "480px", display: "flex", flexDirection: "column", gap: "20px" }}>
         {!showSettings && showTutorial && (
           <div style={{ 
             border: "1.5px dashed var(--border-color)", 
@@ -328,13 +331,13 @@ export default function DashboardClient({
               {/* Share Link */}
               <div>
                 <h3 style={{ fontSize: "14px", fontWeight: 700, marginBottom: "8px" }}>Share Link</h3>
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                   <input 
                     type="text" 
                     readOnly 
                     value={sharingLink} 
                     className="retro-input" 
-                    style={{ backgroundColor: "#F7F3EE", cursor: "default", flexGrow: 1 }}
+                    style={{ backgroundColor: "#F7F3EE", cursor: "default", flexGrow: 1, minWidth: 0 }}
                   />
                   <button onClick={handleCopy} className={`retro-btn ${copySuccess ? 'btn-white' : 'btn-primary'}`} style={{ padding: "8px 16px", whiteSpace: "nowrap" }}>
                     {copySuccess ? "Copied!" : "Copy Link"}
@@ -506,30 +509,53 @@ export default function DashboardClient({
                   const noteNumber = messages.length - messages.findIndex(m => m.id === msg.id);
                   return (
                     <div key={msg.id} className="message-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                      {/* Top Row: Note ID header and Delete Action */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--border-color)" }}>Anonymous Note #{noteNumber}</span>
-                      <button 
-                        onClick={() => triggerDeleteMessageConfirm(msg.id)} 
-                        className="retro-btn btn-white"
-                        style={{ 
-                          padding: "6px 8px", 
-                          color: "#D9534F", 
-                          borderColor: "#D9534F",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center"
-                        }}
-                        title="Delete Note"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          <line x1="10" y1="11" x2="10" y2="17"></line>
-                          <line x1="14" y1="11" x2="14" y2="17"></line>
-                        </svg>
-                      </button>
-                    </div>
+                       {/* Top Row: Note ID header and Actions */}
+                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                         <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--border-color)" }}>Anonymous Note #{noteNumber}</span>
+                         <div style={{ display: "flex", gap: "6px" }}>
+                           <button 
+                             onClick={() => setSharingNote(msg)} 
+                             className="retro-btn btn-white"
+                             style={{ 
+                               padding: "6px 8px", 
+                               color: "var(--border-color)", 
+                               borderColor: "var(--border-color)",
+                               display: "flex",
+                               alignItems: "center",
+                               justifyContent: "center"
+                             }}
+                             title="Share Note"
+                           >
+                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                               <circle cx="18" cy="5" r="3"></circle>
+                               <circle cx="6" cy="12" r="3"></circle>
+                               <circle cx="18" cy="19" r="3"></circle>
+                               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                             </svg>
+                           </button>
+                           <button 
+                             onClick={() => triggerDeleteMessageConfirm(msg.id)} 
+                             className="retro-btn btn-white"
+                             style={{ 
+                               padding: "6px 8px", 
+                               color: "#D9534F", 
+                               borderColor: "#D9534F",
+                               display: "flex",
+                               alignItems: "center",
+                               justifyContent: "center"
+                             }}
+                             title="Delete Note"
+                           >
+                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                               <polyline points="3 6 5 6 21 6"></polyline>
+                               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                               <line x1="10" y1="11" x2="10" y2="17"></line>
+                               <line x1="14" y1="11" x2="14" y2="17"></line>
+                             </svg>
+                           </button>
+                         </div>
+                       </div>
 
                     {/* Question Content */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -615,6 +641,173 @@ export default function DashboardClient({
           </section>
         )}
       </div>
+      {/* Share Note Modal Dialog */}
+      {sharingNote && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(44, 34, 30, 0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "20px"
+        }}>
+          <section className="retro-window" style={{ maxWidth: "420px", maxHeight: "90vh", margin: 0, width: "100%", display: "flex", flexDirection: "column" }}>
+            <div className="window-titlebar" style={{ backgroundColor: "var(--accent-primary)", flexShrink: 0 }}>
+              <div className="window-title">Share Note #{sharingNote.id}</div>
+              <button 
+                onClick={() => setSharingNote(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "16px", color: "var(--border-color)" }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="window-body" style={{ display: "flex", flexDirection: "column", gap: "16px", overflowY: "auto" }}>
+              
+              {/* Card preview representation */}
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+                borderBottom: "1.5px solid var(--border-divider)",
+                paddingBottom: "12px"
+              }}>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div style={{ fontSize: "15px", fontWeight: 500, color: "var(--border-color)", lineHeight: 1.5 }}>“{sharingNote.message_text}”</div>
+                  <div style={{ fontSize: "11px", color: "#8A8480" }}>Asked: {new Date(sharingNote.created_at).toLocaleString()}</div>
+                </div>
+                {sharingNote.is_answered === 1 && sharingNote.reply_text ? (
+                  <div style={{ 
+                    borderLeft: "3.5px solid var(--accent-primary)", 
+                    paddingLeft: "12px", 
+                    marginTop: "4px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "2px"
+                  }}>
+                    <div>
+                      <span style={{ fontWeight: 800, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#7A706B", marginRight: "8px" }}>
+                        {displayName || username}:
+                      </span>
+                      <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--border-color)" }}>{sharingNote.reply_text}</span>
+                    </div>
+                    {sharingNote.answered_at && (
+                      <div style={{ fontSize: "11px", color: "#8A8480" }}>
+                        Answered: {new Date(sharingNote.answered_at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ 
+                    borderLeft: "3.5px dashed #8A8480", 
+                    paddingLeft: "12px", 
+                    marginTop: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    color: "#8A8480",
+                    fontWeight: 500,
+                    fontSize: "12px",
+                    fontStyle: "italic"
+                  }}>
+                    Awaiting reply...
+                  </div>
+                )}
+              </div>
+
+              {/* Share Options List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                
+                {/* Save image card */}
+                <a 
+                  href={`/api/note/${sharingNote.id}/image`}
+                  download={`mimi_note_${sharingNote.id}.png`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="retro-btn btn-primary"
+                  style={{ width: "100%", padding: "10px", textDecoration: "none", fontSize: "13px", boxSizing: "border-box" }}
+                >
+                  Save Note as Image Card
+                </a>
+
+                {/* Copy link */}
+                <button
+                  onClick={() => {
+                    const uniqueUrl = `${window.location.protocol}//${window.location.host}/note/${sharingNote.id}`;
+                    navigator.clipboard.writeText(uniqueUrl);
+                    alert("Unique note link copied to clipboard!");
+                  }}
+                  className="retro-btn btn-white"
+                  style={{ width: "100%", padding: "10px", fontSize: "13px" }}
+                >
+                  Copy Unique Link
+                </button>
+
+                {/* Device Native Web Share */}
+                {typeof navigator !== "undefined" && navigator.share && (
+                  <button
+                    onClick={() => {
+                      const uniqueUrl = `${window.location.protocol}//${window.location.host}/note/${sharingNote.id}`;
+                      navigator.share({
+                        title: `Mimi Mail Note #${sharingNote.id}`,
+                        text: `Check out this anonymous note: "${sharingNote.message_text}"`,
+                        url: uniqueUrl
+                      }).catch(() => {});
+                    }}
+                    className="retro-btn btn-white"
+                    style={{ width: "100%", padding: "10px", fontSize: "13px" }}
+                  >
+                    Share via Device Apps
+                  </button>
+                )}
+
+                <hr style={{ border: 0, borderTop: "1.5px solid var(--border-divider)", margin: "8px 0" }} />
+
+                {/* Social links grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                  <a
+                    href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`${window.location.protocol}//${window.location.host}/note/${sharingNote.id}`)}&text=${encodeURIComponent(`Check out this anonymous note on Mimi Mail!`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="retro-btn btn-white"
+                    style={{ padding: "8px", textDecoration: "none", fontSize: "12px", textAlign: "center" }}
+                  >
+                    Twitter / X
+                  </a>
+                  <a
+                    href={`https://www.facebook.com/dialog/send?link=${encodeURIComponent(`${window.location.protocol}//${window.location.host}/note/${sharingNote.id}`)}&app_id=mock&redirect_uri=${encodeURIComponent(`${window.location.protocol}//${window.location.host}/note/${sharingNote.id}`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="retro-btn btn-white"
+                    style={{ padding: "8px", textDecoration: "none", fontSize: "12px", textAlign: "center" }}
+                  >
+                    Messenger
+                  </a>
+                </div>
+
+                {/* Instagram story instructions */}
+                <div style={{
+                  fontSize: "11px",
+                  color: "#8A8480",
+                  lineHeight: "1.4",
+                  marginTop: "8px",
+                  backgroundColor: "#FAF7F4",
+                  padding: "10px",
+                  borderRadius: "8px",
+                  border: "1px dashed var(--border-color)"
+                }}>
+                  <strong>Instagram Story / DM:</strong> Save the note image card above, then upload it to your story or send it as a message on Instagram!
+                </div>
+
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* Custom Confirmation Modal Dialog */}
       {confirmDialog.isOpen && (
@@ -631,11 +824,11 @@ export default function DashboardClient({
           zIndex: 1000,
           padding: "20px"
         }}>
-          <section className="retro-window" style={{ maxWidth: "400px", margin: 0 }}>
-            <div className="window-titlebar" style={{ backgroundColor: "var(--accent-primary)" }}>
+          <section className="retro-window" style={{ maxWidth: "400px", maxHeight: "90vh", margin: 0, display: "flex", flexDirection: "column" }}>
+            <div className="window-titlebar" style={{ backgroundColor: "var(--accent-primary)", flexShrink: 0 }}>
               <div className="window-title">{confirmDialog.title}</div>
             </div>
-            <div className="window-body">
+            <div className="window-body" style={{ overflowY: "auto" }}>
               <p style={{ fontSize: "14px", lineHeight: "1.5", marginBottom: "20px", fontWeight: 500, color: "#6E6865" }}>
                 {confirmDialog.message}
               </p>
@@ -664,7 +857,7 @@ export default function DashboardClient({
       )}
 
       {/* Footer */}
-      <footer className="footer" style={{ maxWidth: "600px" }}>
+      <footer className="footer" style={{ maxWidth: "480px" }}>
         <div>&copy; 2026 Mimi Mail.</div>
         <div className="footer-links">
           <a href="/about" className="footer-link">About Us</a>

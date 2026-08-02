@@ -182,7 +182,7 @@ export default function ProfileClient({
                 
                 {initialAnswers.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "32px 0", color: "#8A8480", fontSize: "13px", fontWeight: 500 }}>
-                    {displayName || username} hasn&apos;t answered any letters yet. Check back later!
+                    {displayName || username}  hasn&apos;t answered any letters yet. Check back later!
                   </div>
                 ) : (
                   initialAnswers.map(ans => {
