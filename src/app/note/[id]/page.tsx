@@ -52,8 +52,12 @@ export async function generateMetadata({ params }: NotePageProps): Promise<Metad
 
   const headersList = await headers();
   const host = headersList.get('host') || 'mimi-mail.pages.dev';
-  const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
-  const imageUrl = `${protocol}://${host}/api/note/${note.id}/image`;
+  const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+  const protocol = isLocal ? 'http' : 'https';
+  const svgUrl = `${protocol}://${host}/api/note/${note.id}/image`;
+  const imageUrl = isLocal
+    ? svgUrl
+    : `https://images.weserv.nl/?url=${encodeURIComponent(svgUrl)}&output=png`;
 
   const displayName = note.display_name || note.username;
   const noteTitle = note.is_answered && note.reply_text
