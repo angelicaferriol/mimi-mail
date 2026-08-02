@@ -55,6 +55,52 @@ export default function DashboardClient({
 
   // Share note modal state
   const [sharingNote, setSharingNote] = useState<Message | null>(null);
+  
+  // PNG downloading state and client-side converter
+  const [downloadingPng, setDownloadingPng] = useState<number | null>(null);
+
+  const downloadAsPng = async (noteId: number) => {
+    setDownloadingPng(noteId);
+    try {
+      const res = await fetch(`/api/note/${noteId}/image`);
+      if (!res.ok) throw new Error("Failed to load SVG card");
+      const svgText = await res.text();
+
+      // Convert SVG to Blob URL
+      const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1200; // 600 * 2 for high DPI
+        canvas.height = 800; // 400 * 2 for high DPI
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, 1200, 800);
+          const pngUrl = canvas.toDataURL("image/png");
+          
+          const a = document.createElement("a");
+          a.href = pngUrl;
+          a.download = `mimi_note_${noteId}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+        URL.revokeObjectURL(url);
+        setDownloadingPng(null);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        setDownloadingPng(null);
+      };
+      img.src = url;
+    } catch (err) {
+      console.error("PNG export error:", err);
+      alert("Failed to export image. Please try again.");
+      setDownloadingPng(null);
+    }
+  };
 
   // Custom confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -511,7 +557,7 @@ export default function DashboardClient({
                     <div key={msg.id} className="message-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                        {/* Top Row: Note ID header and Actions */}
                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                         <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--border-color)" }}>Anonymous Note #{noteNumber}</span>
+                         <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--border-color)" }}>{msg.is_answered === 1 ? `Answered Note #${noteNumber}` : `Note #${noteNumber}`}</span>
                          <div style={{ display: "flex", gap: "6px" }}>
                            <button 
                              onClick={() => setSharingNote(msg)} 
@@ -560,7 +606,7 @@ export default function DashboardClient({
                     {/* Question Content */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                       <div className="message-text" style={{ fontSize: "15px", margin: 0 }}>“{msg.message_text}”</div>
-                      <span style={{ fontSize: "11px", color: "#8A8480" }}>Asked: {mounted ? new Date(msg.created_at).toLocaleString() : ""}</span>
+                      <span style={{ fontSize: "11px", color: "#8A8480" }}>Sent: {mounted ? new Date(msg.created_at).toLocaleString() : ""}</span>
                     </div>
 
                     {/* Answer Section */}
@@ -574,13 +620,13 @@ export default function DashboardClient({
                         gap: "2px"
                       }}>
                         <div>
-                          <span style={{ fontWeight: 800, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#7A706B", marginRight: "8px" }}>
+                          <span style={{ fontWeight: 800, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#7A706B", marginRight: "14px" }}>
                             {displayName || username}:
                           </span>
                           <span style={{ fontSize: "14px", fontWeight: 500, color: "#2C221E" }}>{msg.reply_text}</span>
                         </div>
                         {msg.answered_at && (
-                          <span style={{ fontSize: "11px", color: "#8A8480" }}>Answered: {mounted && msg.answered_at ? new Date(msg.answered_at).toLocaleString() : ""}</span>
+                          <span style={{ fontSize: "11px", color: "#8A8480" }}>Replied: {mounted && msg.answered_at ? new Date(msg.answered_at).toLocaleString() : ""}</span>
                         )}
                       </div>
                     ) : (
@@ -607,21 +653,21 @@ export default function DashboardClient({
                                   onClick={() => { setReplyingTo(null); setReplyText(""); }} 
                                   className="retro-btn btn-white"
                                   style={{ padding: "5px 10px", fontSize: "11px" }}
-                                disabled={submittingReply}
-                              >
-                                Cancel
-                              </button>
-                              <button 
-                                type="submit" 
-                                className="retro-btn btn-primary"
-                                style={{ padding: "5px 10px", fontSize: "11px" }}
-                                disabled={submittingReply}
-                              >
-                                {submittingReply ? "Posting..." : "Post Answer"}
-                              </button>
+                                  disabled={submittingReply}
+                                >
+                                  Cancel
+                                </button>
+                                <button 
+                                  type="submit" 
+                                  className="retro-btn btn-primary"
+                                  style={{ padding: "5px 10px", fontSize: "11px" }}
+                                  disabled={submittingReply}
+                                >
+                                  {submittingReply ? "Posting..." : "Post Answer"}
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        </form>
+                          </form>
                         ) : (
                           <button 
                             onClick={() => { setReplyingTo(msg.id); setReplyText(""); }} 
@@ -658,7 +704,7 @@ export default function DashboardClient({
         }}>
           <section className="retro-window" style={{ maxWidth: "420px", maxHeight: "90vh", margin: 0, width: "100%", display: "flex", flexDirection: "column" }}>
             <div className="window-titlebar" style={{ backgroundColor: "var(--accent-primary)", flexShrink: 0 }}>
-              <div className="window-title">Share Note #{sharingNote.id}</div>
+              <div className="window-title">Share Note #{messages.length - messages.findIndex(m => m.id === sharingNote.id)}</div>
               <button 
                 onClick={() => setSharingNote(null)}
                 style={{ background: "none", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: "16px", color: "var(--border-color)" }}
@@ -676,10 +722,13 @@ export default function DashboardClient({
                 borderBottom: "1.5px solid var(--border-divider)",
                 paddingBottom: "12px"
               }}>
+                <div style={{ fontWeight: 800, fontSize: "12px", textTransform: "uppercase", color: "var(--accent-primary)", letterSpacing: "0.5px" }}>
+                   {sharingNote.is_answered === 1 ? `Answered Note #${messages.length - messages.findIndex(m => m.id === sharingNote.id)}` : `Note #${messages.length - messages.findIndex(m => m.id === sharingNote.id)}`}
+                </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <div style={{ fontSize: "15px", fontWeight: 500, color: "var(--border-color)", lineHeight: 1.5 }}>“{sharingNote.message_text}”</div>
-                  <div style={{ fontSize: "11px", color: "#8A8480" }}>Asked: {new Date(sharingNote.created_at).toLocaleString()}</div>
+                  <div style={{ fontSize: "11px", color: "#8A8480" }}>Sent: {new Date(sharingNote.created_at).toLocaleString()}</div>
                 </div>
                 {sharingNote.is_answered === 1 && sharingNote.reply_text ? (
                   <div style={{ 
@@ -691,14 +740,14 @@ export default function DashboardClient({
                     gap: "2px"
                   }}>
                     <div>
-                      <span style={{ fontWeight: 800, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#7A706B", marginRight: "8px" }}>
+                      <span style={{ fontWeight: 800, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#7A706B", marginRight: "14px" }}>
                         {displayName || username}:
                       </span>
                       <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--border-color)" }}>{sharingNote.reply_text}</span>
                     </div>
                     {sharingNote.answered_at && (
                       <div style={{ fontSize: "11px", color: "#8A8480" }}>
-                        Answered: {new Date(sharingNote.answered_at).toLocaleString()}
+                        Replied: {new Date(sharingNote.answered_at).toLocaleString()}
                       </div>
                     )}
                   </div>
@@ -706,7 +755,7 @@ export default function DashboardClient({
                   <div style={{ 
                     borderLeft: "3.5px dashed #8A8480", 
                     paddingLeft: "12px", 
-                    marginTop: "4px",
+                    marginTop: "16px",
                     display: "flex",
                     alignItems: "center",
                     color: "#8A8480",
@@ -723,16 +772,20 @@ export default function DashboardClient({
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 
                 {/* Save image card */}
-                <a 
-                  href={`/api/note/${sharingNote.id}/image`}
-                  download={`mimi_note_${sharingNote.id}.png`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="retro-btn btn-primary"
-                  style={{ width: "100%", padding: "10px", textDecoration: "none", fontSize: "13px", boxSizing: "border-box" }}
-                >
-                  Save Note as Image Card
-                </a>
+                 <button
+                   disabled={downloadingPng === sharingNote.id}
+                   onClick={() => downloadAsPng(sharingNote.id)}
+                   className="retro-btn btn-primary"
+                   style={{ 
+                     width: "100%", 
+                     padding: "10px", 
+                     fontSize: "13px", 
+                     cursor: downloadingPng === sharingNote.id ? "default" : "pointer",
+                     opacity: downloadingPng === sharingNote.id ? 0.7 : 1
+                   }}
+                 >
+                   {downloadingPng === sharingNote.id ? "Generating PNG..." : "Save Note as Image Card"}
+                 </button>
 
                 {/* Copy link */}
                 <button

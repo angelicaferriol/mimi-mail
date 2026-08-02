@@ -12,7 +12,9 @@ interface NoteData {
   username: string;
   display_name: string | null;
   theme: string | null;
+  letter_number: number;
 }
+
 
 // Simple text wrapper to split content into lines for SVG
 function wrapText(text: string, maxChars: number): string[] {
@@ -60,7 +62,8 @@ export async function GET(
 
     const note = await db.get<NoteData>(
       `SELECT m.id, m.message_text, m.reply_text, m.is_answered, m.created_at, m.answered_at,
-              u.username, u.display_name, u.theme
+              u.username, u.display_name, u.theme,
+              (SELECT COUNT(*) FROM messages m2 WHERE m2.recipient_id = m.recipient_id AND m2.id <= m.id) as letter_number
        FROM messages m
        JOIN users u ON m.recipient_id = u.id
        WHERE m.id = ?`,
@@ -106,7 +109,7 @@ export async function GET(
 
     // Date
     const askedDate = new Date(note.created_at).toLocaleString();
-    svgElements += `<text x="${cardX + 32}" y="${contentY}" fill="#8A8480" font-size="11" font-family="sans-serif">Asked: ${askedDate}</text>`;
+    svgElements += `<text x="${cardX + 32}" y="${contentY}" fill="#8A8480" font-size="11" font-family="sans-serif">Sent: ${askedDate}</text>`;
     contentY += 28;
 
     // Answer/Reply Section
@@ -114,11 +117,11 @@ export async function GET(
       const lineStartY = contentY - 12;
       let replyTextElements = '';
       
-      // First line includes the display name
+      // First line includes the display name with extra spacing
       const firstLine = replyLines[0];
       replyTextElements += `
         <text x="${cardX + 46}" y="${contentY}" font-family="sans-serif">
-          <tspan fill="#7A706B" font-size="11" font-weight="800" letter-spacing="0.5">${displayName.toUpperCase()}: </tspan>
+          <tspan fill="#7A706B" font-size="11" font-weight="800" letter-spacing="0.5">${displayName.toUpperCase()}:    </tspan>
           <tspan fill="#2C221E" font-size="14" font-weight="500">${firstLine}</tspan>
         </text>
       `;
@@ -132,7 +135,7 @@ export async function GET(
 
       // Date answered
       const answeredDate = note.answered_at ? new Date(note.answered_at).toLocaleString() : '';
-      replyTextElements += `<text x="${cardX + 46}" y="${contentY}" fill="#8A8480" font-size="11" font-family="sans-serif">Answered: ${answeredDate}</text>`;
+      replyTextElements += `<text x="${cardX + 46}" y="${contentY}" fill="#8A8480" font-size="11" font-family="sans-serif">Replied: ${answeredDate}</text>`;
       
       const lineEndY = contentY + 4;
       
@@ -142,6 +145,7 @@ export async function GET(
         ${replyTextElements}
       `;
     } else {
+      contentY += 12; // Add spacing to hasnt answered block
       const lineStartY = contentY - 12;
       const lineEndY = contentY + 12;
       svgElements += `
@@ -172,7 +176,7 @@ export async function GET(
             <!-- Titlebar -->
             <rect x="${cardX}" y="${cardY}" width="${cardWidth}" height="${titlebarHeight}" fill="${themeColor}" />
             <line x1="${cardX}" y1="${cardY + titlebarHeight}" x2="${cardX + cardWidth}" y2="${cardY + titlebarHeight}" stroke="#2C221E" stroke-width="3" />
-            <text x="${cardX + 24}" y="${cardY + 34}" fill="#2C221E" font-size="18" font-weight="bold" font-family="sans-serif">Anonymous Note #${note.id}</text>
+            <text x="${cardX + 24}" y="${cardY + 34}" fill="#2C221E" font-size="18" font-weight="bold" font-family="sans-serif">${note.is_answered === 1 && note.reply_text ? `Answered Note #${note.letter_number}` : `Note #${note.letter_number}`}</text>
             
             <!-- Dynamic Content elements -->
             ${svgElements}

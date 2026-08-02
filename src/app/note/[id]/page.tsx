@@ -20,6 +20,7 @@ interface NoteData {
   username: string;
   display_name: string | null;
   theme: string | null;
+  letter_number: number;
 }
 
 async function getNote(id: string): Promise<NoteData | null> {
@@ -28,7 +29,8 @@ async function getNote(id: string): Promise<NoteData | null> {
 
   const note = await db.get<NoteData>(
     `SELECT m.id, m.message_text, m.reply_text, m.is_answered, m.created_at, m.answered_at,
-            u.username, u.display_name, u.theme
+            u.username, u.display_name, u.theme,
+            (SELECT COUNT(*) FROM messages m2 WHERE m2.recipient_id = m.recipient_id AND m2.id <= m.id) as letter_number
      FROM messages m
      JOIN users u ON m.recipient_id = u.id
      WHERE m.id = ?`,
@@ -48,29 +50,32 @@ export async function generateMetadata({ params }: NotePageProps): Promise<Metad
   }
 
   const displayName = note.display_name || note.username;
+  const noteTitle = note.is_answered && note.reply_text
+    ? `Answered Note #${note.letter_number}`
+    : `Note #${note.letter_number}`;
   const description = note.is_answered && note.reply_text
-    ? `"${note.message_text}" — Answered by ${displayName}`
+    ? `"${note.message_text}" — Replied by ${displayName}`
     : `Read this cute anonymous note on Mimi Mail!`;
 
   return {
-    title: `Note #${note.id} | Mimi Mail`,
+    title: `${noteTitle} | Mimi Mail`,
     description,
     openGraph: {
-      title: `Note #${note.id} | Mimi Mail`,
+      title: `${noteTitle} | Mimi Mail`,
       description,
       images: [
         {
           url: `/api/note/${note.id}/image`,
           width: 600,
           height: 400,
-          alt: `Mimi Mail Note #${note.id}`,
+          alt: `Mimi Mail ${noteTitle}`,
         },
       ],
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `Note #${note.id} | Mimi Mail`,
+      title: `${noteTitle} | Mimi Mail`,
       description,
       images: [`/api/note/${note.id}/image`],
     },
@@ -87,6 +92,7 @@ export default async function NotePage({ params }: NotePageProps) {
 
   const displayName = note.display_name || note.username;
   const themeClass = note.theme || 'theme-peach';
+  const title = note.is_answered === 1 && note.reply_text ? `Answered Note #${note.letter_number}` : `Note #${note.letter_number}`;
 
   return (
     <main className="desktop">
@@ -110,7 +116,7 @@ export default async function NotePage({ params }: NotePageProps) {
       <div style={{ width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <section className="retro-window">
           <div className="window-titlebar" style={{ backgroundColor: 'var(--accent-primary)' }}>
-            <div className="window-title">Anonymous Note #{note.id}</div>
+            <div className="window-title">{title}</div>
           </div>
           <div className="window-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Question Content */}
@@ -119,7 +125,7 @@ export default async function NotePage({ params }: NotePageProps) {
                 “{note.message_text}”
               </div>
               <div style={{ fontSize: '11px', color: '#8A8480' }}>
-                Asked: {new Date(note.created_at).toLocaleString()}
+                Sent: {new Date(note.created_at).toLocaleString()}
               </div>
             </div>
 
@@ -134,20 +140,20 @@ export default async function NotePage({ params }: NotePageProps) {
                 gap: '2px'
               }}>
                 <div>
-                  <span style={{ fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#7A706B', marginRight: '8px' }}>
+                  <span style={{ fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#7A706B', marginRight: '14px' }}>
                     {displayName}:
                   </span>
                   <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--border-color)' }}>{note.reply_text}</span>
                 </div>
                 <div style={{ fontSize: '11px', color: '#8A8480' }}>
-                  Answered: {note.answered_at ? new Date(note.answered_at).toLocaleString() : ''}
+                  Replied: {note.answered_at ? new Date(note.answered_at).toLocaleString() : ''}
                 </div>
               </div>
             ) : (
               <div style={{ 
                 borderLeft: '3.5px dashed #8A8480', 
                 paddingLeft: '12px', 
-                marginTop: '4px',
+                marginTop: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 color: '#8A8480',
