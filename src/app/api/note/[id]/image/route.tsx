@@ -1,4 +1,3 @@
-import { ImageResponse } from 'next/og';
 import db from '@/lib/db';
 
 export const runtime = 'edge';
@@ -13,6 +12,39 @@ interface NoteData {
   username: string;
   display_name: string | null;
   theme: string | null;
+}
+
+// Simple text wrapper to split content into lines for SVG
+function wrapText(text: string, maxChars: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    if ((currentLine + word).length > maxChars) {
+      lines.push(currentLine.trim());
+      currentLine = word + ' ';
+    } else {
+      currentLine += word + ' ';
+    }
+  }
+  if (currentLine) {
+    lines.push(currentLine.trim());
+  }
+  return lines;
+}
+
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
 }
 
 export async function GET(
@@ -49,130 +81,114 @@ export async function GET(
 
     const activeTheme = note.theme || 'theme-peach';
     const themeColor = themeColors[activeTheme] || themeColors['theme-peach'];
-    const displayName = note.display_name || note.username;
+    const displayName = escapeXml(note.display_name || note.username);
+    
+    // Wrap message and reply text
+    const messageLines = wrapText(`“${note.message_text}”`, 52).map(escapeXml);
+    const replyLines = note.reply_text ? wrapText(note.reply_text, 52).map(escapeXml) : [];
 
-    // Render retro card layout
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            height: '100%',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#FDFBF7',
-            padding: '40px',
-            fontFamily: 'sans-serif',
-          }}
-        >
-          {/* Card Wrapper */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '520px',
-              backgroundColor: '#FFFFFF',
-              border: '3px solid #2C221E',
-              borderRadius: '24px',
-              boxShadow: '8px 8px 0px #2C221E',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Titlebar */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: themeColor,
-                borderBottom: '3px solid #2C221E',
-                padding: '16px 24px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '22px',
-                  fontWeight: 'bold',
-                  color: '#2C221E',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                Anonymous Note #{note.id}
-              </div>
-            </div>
+    // Layout configuration
+    const cardX = 40;
+    const cardY = 40;
+    const cardWidth = 520;
+    const cardHeight = 320;
+    const titlebarHeight = 56;
+    
+    // Render content dynamic coordinates
+    let contentY = cardY + titlebarHeight + 36;
+    let svgElements = '';
 
-            {/* Window Body */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                padding: '32px',
-                gap: '16px',
-              }}
-            >
+    // Render message lines
+    messageLines.forEach((line) => {
+      svgElements += `<text x="${cardX + 32}" y="${contentY}" fill="#2C221E" font-size="15" font-weight="500" font-family="sans-serif">${line}</text>`;
+      contentY += 22;
+    });
 
-              {/* Question Content */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ fontSize: '15px', fontWeight: '500', color: '#2C221E', lineHeight: '1.4' }}>
-                  “{note.message_text}”
-                </div>
-                <div style={{ fontSize: '11px', color: '#8A8480' }}>
-                  Asked: {new Date(note.created_at).toLocaleString()}
-                </div>
-              </div>
+    // Date
+    const askedDate = new Date(note.created_at).toLocaleString();
+    svgElements += `<text x="${cardX + 32}" y="${contentY}" fill="#8A8480" font-size="11" font-family="sans-serif">Asked: ${askedDate}</text>`;
+    contentY += 28;
 
-              {/* Answer bubble */}
-              {note.is_answered === 1 && note.reply_text ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderLeft: `3.5px solid ${themeColor}`,
-                    paddingLeft: '12px',
-                    marginTop: '4px',
-                    gap: '2px',
-                  }}
-                >
-                  <div>
-                    <span style={{ fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#7A706B', marginRight: '8px' }}>
-                      {displayName}:
-                    </span>
-                    <span style={{ fontSize: '14px', fontWeight: '500', color: '#2C221E' }}>{note.reply_text}</span>
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#8A8480' }}>
-                    Answered: {note.answered_at ? new Date(note.answered_at).toLocaleString() : ""}
-                  </div>
-                </div>
-              ) : (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderLeft: '3.5px dashed #8A8480',
-                    paddingLeft: '12px',
-                    marginTop: '4px',
-                    color: '#8A8480',
-                    fontWeight: 500,
-                    fontSize: '13px',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  Awaiting reply...
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ),
-      {
-        width: 600,
-        height: 400,
+    // Answer/Reply Section
+    if (note.is_answered === 1 && replyLines.length > 0) {
+      const lineStartY = contentY - 12;
+      let replyTextElements = '';
+      
+      // First line includes the display name
+      const firstLine = replyLines[0];
+      replyTextElements += `
+        <text x="${cardX + 46}" y="${contentY}" font-family="sans-serif">
+          <tspan fill="#7A706B" font-size="11" font-weight="800" letter-spacing="0.5">${displayName.toUpperCase()}: </tspan>
+          <tspan fill="#2C221E" font-size="14" font-weight="500">${firstLine}</tspan>
+        </text>
+      `;
+      contentY += 20;
+
+      // Remaining lines
+      for (let i = 1; i < replyLines.length; i++) {
+        replyTextElements += `<text x="${cardX + 46}" y="${contentY}" fill="#2C221E" font-size="14" font-weight="500" font-family="sans-serif">${replyLines[i]}</text>`;
+        contentY += 20;
       }
-    );
+
+      // Date answered
+      const answeredDate = note.answered_at ? new Date(note.answered_at).toLocaleString() : '';
+      replyTextElements += `<text x="${cardX + 46}" y="${contentY}" fill="#8A8480" font-size="11" font-family="sans-serif">Answered: ${answeredDate}</text>`;
+      
+      const lineEndY = contentY + 4;
+      
+      // Draw vertical border and append reply text elements
+      svgElements += `
+        <line x1="${cardX + 32}" y1="${lineStartY}" x2="${cardX + 32}" y2="${lineEndY}" stroke="${themeColor}" stroke-width="3.5" stroke-linecap="round" />
+        ${replyTextElements}
+      `;
+    } else {
+      const lineStartY = contentY - 12;
+      const lineEndY = contentY + 12;
+      svgElements += `
+        <line x1="${cardX + 32}" y1="${lineStartY}" x2="${cardX + 32}" y2="${lineEndY}" stroke="#8A8480" stroke-width="3.5" stroke-dasharray="4 4" />
+        <text x="${cardX + 46}" y="${contentY + 4}" fill="#8A8480" font-size="13" font-weight="500" font-style="italic" font-family="sans-serif">Awaiting reply...</text>
+      `;
+    }
+
+    // SVG Template
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+        <!-- Background -->
+        <rect width="600" height="400" fill="#FDFBF7" />
+
+        <!-- Card Shadow -->
+        <rect x="${cardX + 8}" y="${cardY + 8}" width="${cardWidth}" height="${cardHeight}" rx="24" fill="#2C221E" />
+
+        <!-- Card Container with clip path to preserve rounded corners -->
+        <g>
+          <clipPath id="card-clip">
+            <rect x="${cardX}" y="${cardY}" width="${cardWidth}" height="${cardHeight}" rx="24" />
+          </clipPath>
+          
+          <!-- Outer border -->
+          <rect x="${cardX}" y="${cardY}" width="${cardWidth}" height="${cardHeight}" rx="24" fill="#FFFFFF" stroke="#2C221E" stroke-width="3" />
+          
+          <g clip-path="url(#card-clip)">
+            <!-- Titlebar -->
+            <rect x="${cardX}" y="${cardY}" width="${cardWidth}" height="${titlebarHeight}" fill="${themeColor}" />
+            <line x1="${cardX}" y1="${cardY + titlebarHeight}" x2="${cardX + cardWidth}" y2="${cardY + titlebarHeight}" stroke="#2C221E" stroke-width="3" />
+            <text x="${cardX + 24}" y="${cardY + 34}" fill="#2C221E" font-size="18" font-weight="bold" font-family="sans-serif">Anonymous Note #${note.id}</text>
+            
+            <!-- Dynamic Content elements -->
+            ${svgElements}
+          </g>
+        </g>
+      </svg>
+    `.trim();
+
+    return new Response(svg, {
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'public, max-age=3600, must-revalidate',
+      },
+    });
   } catch (error: any) {
-    console.error('OG Image generation error:', error);
+    console.error('SVG Image generation error:', error);
     return new Response('Error generating image', { status: 500 });
   }
 }
