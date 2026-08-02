@@ -86,16 +86,19 @@ export async function GET(
     const themeColor = themeColors[activeTheme] || themeColors['theme-peach'];
     const displayName = escapeXml(note.display_name || note.username);
     
-    // Wrap message and reply text
+    // Wrap message text
     const messageLines = wrapText(`“${note.message_text}”`, 52).map(escapeXml);
-    const replyLines = note.reply_text ? wrapText(note.reply_text, 52).map(escapeXml) : [];
 
     // Layout configuration
     const cardX = 40;
-    const cardY = 40;
     const cardWidth = 520;
-    const cardHeight = 320;
     const titlebarHeight = 56;
+    
+    // Calculate dynamic height and vertical centering
+    const messageHeight = messageLines.length * 22;
+    const cardHeight = titlebarHeight + 36 + messageHeight + 36;
+    const canvasHeight = 400;
+    const cardY = Math.round((canvasHeight - cardHeight) / 2);
     
     // Render content dynamic coordinates
     let contentY = cardY + titlebarHeight + 36;
@@ -110,49 +113,6 @@ export async function GET(
     // Date
     const askedDate = new Date(note.created_at).toLocaleString();
     svgElements += `<text x="${cardX + 32}" y="${contentY}" fill="#8A8480" font-size="11" font-family="sans-serif">Sent: ${askedDate}</text>`;
-    contentY += 28;
-
-    // Answer/Reply Section
-    if (note.is_answered === 1 && replyLines.length > 0) {
-      const lineStartY = contentY - 12;
-      let replyTextElements = '';
-      
-      // First line includes the display name with extra spacing
-      const firstLine = replyLines[0];
-      replyTextElements += `
-        <text x="${cardX + 46}" y="${contentY}" font-family="sans-serif">
-          <tspan fill="#7A706B" font-size="11" font-weight="800" letter-spacing="0.5">${displayName.toUpperCase()}:    </tspan>
-          <tspan fill="#2C221E" font-size="14" font-weight="500">${firstLine}</tspan>
-        </text>
-      `;
-      contentY += 20;
-
-      // Remaining lines
-      for (let i = 1; i < replyLines.length; i++) {
-        replyTextElements += `<text x="${cardX + 46}" y="${contentY}" fill="#2C221E" font-size="14" font-weight="500" font-family="sans-serif">${replyLines[i]}</text>`;
-        contentY += 20;
-      }
-
-      // Date answered
-      const answeredDate = note.answered_at ? new Date(note.answered_at).toLocaleString() : '';
-      replyTextElements += `<text x="${cardX + 46}" y="${contentY}" fill="#8A8480" font-size="11" font-family="sans-serif">Replied: ${answeredDate}</text>`;
-      
-      const lineEndY = contentY + 4;
-      
-      // Draw vertical border and append reply text elements
-      svgElements += `
-        <line x1="${cardX + 32}" y1="${lineStartY}" x2="${cardX + 32}" y2="${lineEndY}" stroke="${themeColor}" stroke-width="3.5" stroke-linecap="round" />
-        ${replyTextElements}
-      `;
-    } else {
-      contentY += 12; // Add spacing to hasnt answered block
-      const lineStartY = contentY - 12;
-      const lineEndY = contentY + 12;
-      svgElements += `
-        <line x1="${cardX + 32}" y1="${lineStartY}" x2="${cardX + 32}" y2="${lineEndY}" stroke="#8A8480" stroke-width="3.5" stroke-dasharray="4 4" />
-        <text x="${cardX + 46}" y="${contentY + 4}" fill="#8A8480" font-size="13" font-weight="500" font-style="italic" font-family="sans-serif">Awaiting reply...</text>
-      `;
-    }
 
     // SVG Template
     const svg = `
@@ -176,7 +136,7 @@ export async function GET(
             <!-- Titlebar -->
             <rect x="${cardX}" y="${cardY}" width="${cardWidth}" height="${titlebarHeight}" fill="${themeColor}" />
             <line x1="${cardX}" y1="${cardY + titlebarHeight}" x2="${cardX + cardWidth}" y2="${cardY + titlebarHeight}" stroke="#2C221E" stroke-width="3" />
-            <text x="${cardX + 24}" y="${cardY + 34}" fill="#2C221E" font-size="18" font-weight="bold" font-family="sans-serif">${note.is_answered === 1 && note.reply_text ? `Answered Note #${note.letter_number}` : `Note #${note.letter_number}`}</text>
+            <text x="${cardX + 24}" y="${cardY + 34}" fill="#2C221E" font-size="18" font-weight="bold" font-family="sans-serif">Note #${note.letter_number}</text>
             
             <!-- Dynamic Content elements -->
             ${svgElements}

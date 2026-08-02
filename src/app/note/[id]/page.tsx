@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import db from '@/lib/db';
 import ThemeSync from './ThemeSync';
 
@@ -34,7 +35,7 @@ async function getNote(id: string): Promise<NoteData | null> {
      FROM messages m
      JOIN users u ON m.recipient_id = u.id
      WHERE m.id = ?`,
-    noteId
+     noteId
   );
   return note || null;
 }
@@ -48,6 +49,11 @@ export async function generateMetadata({ params }: NotePageProps): Promise<Metad
       title: 'Note Not Found | Mimi Mail',
     };
   }
+
+  const headersList = await headers();
+  const host = headersList.get('host') || 'mimi-mail.pages.dev';
+  const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+  const imageUrl = `${protocol}://${host}/api/note/${note.id}/image`;
 
   const displayName = note.display_name || note.username;
   const noteTitle = note.is_answered && note.reply_text
@@ -65,7 +71,7 @@ export async function generateMetadata({ params }: NotePageProps): Promise<Metad
       description,
       images: [
         {
-          url: `/api/note/${note.id}/image`,
+          url: imageUrl,
           width: 600,
           height: 400,
           alt: `Mimi Mail ${noteTitle}`,
@@ -77,7 +83,7 @@ export async function generateMetadata({ params }: NotePageProps): Promise<Metad
       card: 'summary_large_image',
       title: `${noteTitle} | Mimi Mail`,
       description,
-      images: [`/api/note/${note.id}/image`],
+      images: [imageUrl],
     },
   };
 }
