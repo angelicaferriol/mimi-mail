@@ -46,3 +46,8 @@ next-env.d.ts
 *.db-wal
 *.db-shm
 
+# wrangler
+.wrangler/
+.wrangler
+
+

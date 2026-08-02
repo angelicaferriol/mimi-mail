@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/mail';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'edge';
 
@@ -9,6 +10,13 @@ interface ContactError {
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = await checkRateLimit(request, 'contact-send', 3, 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many contact requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
     const { category, message } = await request.json();
 
     if (!category || !message) {

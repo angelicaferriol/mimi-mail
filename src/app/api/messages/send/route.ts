@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'edge';
 
@@ -9,6 +10,13 @@ interface RecipientRow {
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = await checkRateLimit(request, 'message-send', 5, 10 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many messages sent. Please try again later.' },
+        { status: 429 }
+      );
+    }
     const { username, messageText } = await request.json();
 
     if (!username || !messageText) {
