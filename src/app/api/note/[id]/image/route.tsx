@@ -1,4 +1,5 @@
 import db from '@/lib/db';
+import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
@@ -13,40 +14,6 @@ interface NoteData {
   display_name: string | null;
   theme: string | null;
   letter_number: number;
-}
-
-
-// Simple text wrapper to split content into lines for SVG
-function wrapText(text: string, maxChars: number): string[] {
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let currentLine = '';
-
-  for (const word of words) {
-    if ((currentLine + word).length > maxChars) {
-      lines.push(currentLine.trim());
-      currentLine = word + ' ';
-    } else {
-      currentLine += word + ' ';
-    }
-  }
-  if (currentLine) {
-    lines.push(currentLine.trim());
-  }
-  return lines;
-}
-
-function escapeXml(unsafe: string): string {
-  return unsafe.replace(/[<>&'"]/g, (c) => {
-    switch (c) {
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '&': return '&amp;';
-      case '\'': return '&apos;';
-      case '"': return '&quot;';
-      default: return c;
-    }
-  });
 }
 
 export async function GET(
@@ -84,75 +51,111 @@ export async function GET(
 
     const activeTheme = note.theme || 'theme-peach';
     const themeColor = themeColors[activeTheme] || themeColors['theme-peach'];
-    const displayName = escapeXml(note.display_name || note.username);
-    
-    // Wrap message text
-    const messageLines = wrapText(`“${note.message_text}”`, 52).map(escapeXml);
-
-    // Layout configuration
-    const cardX = 40;
-    const cardWidth = 520;
-    const titlebarHeight = 56;
-    
-    // Calculate dynamic height and vertical centering
-    const messageHeight = messageLines.length * 22;
-    const cardHeight = titlebarHeight + 36 + messageHeight + 36;
-    const canvasHeight = 400;
-    const cardY = Math.round((canvasHeight - cardHeight) / 2);
-    
-    // Render content dynamic coordinates
-    let contentY = cardY + titlebarHeight + 36;
-    let svgElements = '';
-
-    // Render message lines
-    messageLines.forEach((line) => {
-      svgElements += `<text x="${cardX + 32}" y="${contentY}" fill="#2C221E" font-size="15" font-weight="500" font-family="sans-serif">${line}</text>`;
-      contentY += 22;
-    });
-
-    // Date
     const askedDate = new Date(note.created_at).toLocaleString();
-    svgElements += `<text x="${cardX + 32}" y="${contentY}" fill="#8A8480" font-size="11" font-family="sans-serif">Sent: ${askedDate}</text>`;
 
-    // SVG Template
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
-        <!-- Background -->
-        <rect width="600" height="400" fill="#FDFBF7" />
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: '600px',
+            height: '400px',
+            backgroundColor: '#FDFBF7',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {/* Card Shadow Container */}
+          <div style={{ display: 'flex', position: 'relative', width: '520px' }}>
+            {/* Solid Offset Shadow */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '8px',
+                left: '8px',
+                right: '-8px',
+                bottom: '-8px',
+                backgroundColor: '#2C221E',
+                borderRadius: '24px',
+              }}
+            />
 
-        <!-- Card Shadow -->
-        <rect x="${cardX + 8}" y="${cardY + 8}" width="${cardWidth}" height="${cardHeight}" rx="24" fill="#2C221E" />
+            {/* Main Card */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '520px',
+                backgroundColor: '#FFFFFF',
+                border: '3px solid #2C221E',
+                borderRadius: '24px',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Titlebar */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0 24px',
+                  height: '56px',
+                  backgroundColor: themeColor,
+                  borderBottom: '3px solid #2C221E',
+                }}
+              >
+                <span
+                  style={{
+                    color: '#2C221E',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    fontFamily: 'sans-serif',
+                  }}
+                >
+                  Note #{note.letter_number}
+                </span>
+              </div>
 
-        <!-- Card Container with clip path to preserve rounded corners -->
-        <g>
-          <clipPath id="card-clip">
-            <rect x="${cardX}" y="${cardY}" width="${cardWidth}" height="${cardHeight}" rx="24" />
-          </clipPath>
-          
-          <!-- Outer border -->
-          <rect x="${cardX}" y="${cardY}" width="${cardWidth}" height="${cardHeight}" rx="24" fill="#FFFFFF" stroke="#2C221E" stroke-width="3" />
-          
-          <g clip-path="url(#card-clip)">
-            <!-- Titlebar -->
-            <rect x="${cardX}" y="${cardY}" width="${cardWidth}" height="${titlebarHeight}" fill="${themeColor}" />
-            <line x1="${cardX}" y1="${cardY + titlebarHeight}" x2="${cardX + cardWidth}" y2="${cardY + titlebarHeight}" stroke="#2C221E" stroke-width="3" />
-            <text x="${cardX + 24}" y="${cardY + 34}" fill="#2C221E" font-size="18" font-weight="bold" font-family="sans-serif">Note #${note.letter_number}</text>
-            
-            <!-- Dynamic Content elements -->
-            ${svgElements}
-          </g>
-        </g>
-      </svg>
-    `.trim();
-
-    return new Response(svg, {
-      headers: {
-        'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=3600, must-revalidate',
-      },
-    });
+              {/* Content body */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: '32px',
+                  gap: '16px',
+                }}
+              >
+                <span
+                  style={{
+                    color: '#2C221E',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    lineHeight: 1.4,
+                    fontFamily: 'sans-serif',
+                  }}
+                >
+                  “{note.message_text}”
+                </span>
+                <span
+                  style={{
+                    color: '#8A8480',
+                    fontSize: '11px',
+                    fontFamily: 'sans-serif',
+                  }}
+                >
+                  Sent: {askedDate}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+      {
+        width: 600,
+        height: 400,
+      }
+    );
   } catch (error: any) {
-    console.error('SVG Image generation error:', error);
+    console.error('Image generation error:', error);
     return new Response('Error generating image', { status: 500 });
   }
 }
