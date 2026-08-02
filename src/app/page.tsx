@@ -30,11 +30,24 @@ export default function LandingPage() {
   const [newPassword, setNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  // Load theme on mount
+  // Welcome view states
+  const [view, setView] = useState<"welcome" | "auth">("welcome");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Load theme on mount & check session
   useEffect(() => {
     const savedTheme = localStorage.getItem("mimi-theme") || "theme-peach";
     const savedDark = localStorage.getItem("mimi-dark") === "true";
     document.body.className = `${savedTheme} ${savedDark ? "dark-mode" : ""}`;
+
+    fetch("/api/auth/session")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.loggedIn) {
+          setIsLoggedIn(true);
+        }
+      })
+      .catch((err) => console.error("Session check failed:", err));
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -205,39 +218,85 @@ export default function LandingPage() {
   return (
     <main className="desktop">
       {/* Header/Navbar */}
-      <header className="taskbar" style={{ maxWidth: "420px" }}>
-        <div className="logo-container">
-          <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
-          <h1 className="logo-text">Mimi Mail</h1>
-        </div>
-        <div className="nav-links">
-          <button 
+      {view === "auth" && (
+        <header className="taskbar" style={{ maxWidth: "420px" }}>
+          <div 
+            className="logo-container" 
             onClick={() => {
-              setIsLogin(true);
-              setShowVerify(false);
-              setForgotStep("none");
-            }} 
-            className={`retro-btn ${isLogin && !showVerify && forgotStep === "none" ? 'btn-primary' : 'btn-white'}`}
-            style={{ padding: '5px 12px', fontSize: '13px' }}
+              if (isLoggedIn) {
+                router.push("/dashboard");
+              } else {
+                setView("welcome");
+              }
+            }}
+            style={{ cursor: "pointer" }}
           >
-            Log In
-          </button>
-          <button 
-            onClick={() => {
-              setIsLogin(false);
-              setShowVerify(false);
-              setForgotStep("none");
-            }} 
-            className={`retro-btn ${!isLogin && !showVerify && forgotStep === "none" ? 'btn-primary' : 'btn-white'}`}
-            style={{ padding: '5px 12px', fontSize: '13px' }}
-          >
-            Sign Up
-          </button>
-        </div>
-      </header>
+            <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
+            <h1 className="logo-text">Mimi Mail</h1>
+          </div>
+          <div className="nav-links">
+            <button 
+              onClick={() => {
+                setIsLogin(true);
+                setShowVerify(false);
+                setForgotStep("none");
+              }} 
+              className={`retro-btn ${isLogin && !showVerify && forgotStep === "none" ? 'btn-primary' : 'btn-white'}`}
+              style={{ padding: '5px 12px', fontSize: '13px' }}
+            >
+              Log In
+            </button>
+            <button 
+              onClick={() => {
+                setIsLogin(false);
+                setShowVerify(false);
+                setForgotStep("none");
+              }} 
+              className={`retro-btn ${!isLogin && !showVerify && forgotStep === "none" ? 'btn-primary' : 'btn-white'}`}
+              style={{ padding: '5px 12px', fontSize: '13px' }}
+            >
+              Sign Up
+            </button>
+          </div>
+        </header>
+      )}
 
-      {/* Auth Box */}
-      <section className="retro-window" style={{ maxWidth: "420px" }}>
+      {view === "welcome" ? (
+        <div className="welcome-container" style={{ maxWidth: "420px", marginTop: "5%" }}>
+          <img src="/icon.png" alt="Mimi Mail Mascot" className="welcome-img" />
+          <h1 className="welcome-title">Mimi Mail</h1>
+          <p className="welcome-desc">
+            Share your mailbox, receive anonymous notes, and publish replies in a nostalgic 90s desktop style!
+          </p>
+          <div className="welcome-btn-container">
+            <button 
+              onClick={() => {
+                setIsLogin(false);
+                setView("auth");
+              }} 
+              className="retro-btn btn-primary"
+              style={{ padding: '12px 24px', fontSize: '15px', fontWeight: 'bold', width: '100%' }}
+            >
+              Let&apos;s get started
+            </button>
+            <button 
+              onClick={() => {
+                setIsLogin(true);
+                setView("auth");
+              }} 
+              className="retro-btn btn-white"
+              style={{ padding: '12px 24px', fontSize: '15px', fontWeight: 'bold', width: '100%' }}
+            >
+              I already have an account
+            </button>
+          </div>
+          <p className="welcome-terms">
+            By continuing, you agree to Mimi Mail&apos;s <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>.
+          </p>
+        </div>
+      ) : (
+        /* Auth Box */
+        <section className="retro-window" style={{ maxWidth: "420px" }}>
         <div className="window-titlebar" style={{ backgroundColor: "var(--accent-primary)" }}>
           <div className="window-title">
             {getWindowTitle()}
@@ -578,6 +637,7 @@ export default function LandingPage() {
           )}
         </div>
       </section>
+      )}
 
       {/* Footer */}
       <footer className="footer" style={{ maxWidth: "420px" }}>

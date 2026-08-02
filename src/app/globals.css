@@ -438,3 +438,74 @@ select.retro-input {
   }
 }
 
+/* Welcome Page Styles */
+.welcome-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 16px;
+  width: 100%;
+}
+
+.welcome-img {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  margin-bottom: 24px;
+}
+
+.welcome-title {
+  font-family: var(--font-sans);
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--border-color);
+  margin-bottom: 12px;
+  letter-spacing: -1px;
+}
+
+.welcome-desc {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-muted, #6E6865);
+  font-weight: 500;
+  max-width: 360px;
+  margin-bottom: 32px;
+}
+
+.welcome-btn-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 600px) {
+  .welcome-btn-container {
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+  }
+  .welcome-btn-container button {
+    flex: 1;
+  }
+}
+
+.welcome-terms {
+  font-size: 11px;
+  color: #8A8480;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-top: 12px;
+}
+
+.welcome-terms a {
+  color: var(--border-color);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+
