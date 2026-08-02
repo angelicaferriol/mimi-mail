@@ -11,10 +11,10 @@ export default function TermsPage() {
     <main className="desktop">
       {/* Header/Navbar */}
       <header className="taskbar" style={{ maxWidth: "600px" }}>
-        <div className="logo-container">
+        <Link href="/" className="logo-container" style={{ textDecoration: "none", color: "inherit" }}>
           <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
           <span className="logo-text">Mimi Mail</span>
-        </div>
+        </Link>
         <div className="nav-links">
           <Link href="/" className="retro-btn btn-white" style={{ padding: "5px 12px", fontSize: "12px" }}>
             Back Home

@@ -48,6 +48,12 @@ export default function LandingPage() {
         }
       })
       .catch((err) => console.error("Session check failed:", err));
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mode") === "register") {
+      setView("auth");
+      setIsLogin(false);
+    }
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -266,7 +272,7 @@ export default function LandingPage() {
           <img src="/icon.png" alt="Mimi Mail Mascot" className="welcome-img" />
           <h1 className="welcome-title">Mimi Mail</h1>
           <p className="welcome-desc">
-            Share your mailbox, receive anonymous notes, and publish replies in a nostalgic 90s desktop style!
+            Share your mailbox, receive anonymous notes, and publish replies!
           </p>
           <div className="welcome-btn-container">
             <button 
@@ -275,7 +281,7 @@ export default function LandingPage() {
                 setView("auth");
               }} 
               className="retro-btn btn-primary"
-              style={{ padding: '12px 24px', fontSize: '15px', fontWeight: 'bold', width: '100%' }}
+              style={{ padding: '10px 16px', fontSize: '13.5px', fontWeight: 'bold', width: '100%', whiteSpace: 'nowrap' }}
             >
               Let&apos;s get started
             </button>
@@ -285,7 +291,7 @@ export default function LandingPage() {
                 setView("auth");
               }} 
               className="retro-btn btn-white"
-              style={{ padding: '12px 24px', fontSize: '15px', fontWeight: 'bold', width: '100%' }}
+              style={{ padding: '10px 16px', fontSize: '13.5px', fontWeight: 'bold', width: '100%', whiteSpace: 'nowrap' }}
             >
               I already have an account
             </button>

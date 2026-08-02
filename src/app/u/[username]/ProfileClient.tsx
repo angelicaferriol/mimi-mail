@@ -70,15 +70,18 @@ export default function ProfileClient({
 
   return (
     <main className="desktop">
-      {/* Header/Navbar */}
       <header className="taskbar" style={{ maxWidth: "450px" }}>
-        <div className="logo-container">
+        <div 
+          className="logo-container" 
+          onClick={() => router.push("/")} 
+          style={{ cursor: "pointer" }}
+        >
           <img src="/icon.png" alt="Mimi Mail Logo" style={{ width: "32px", height: "32px", objectFit: "contain", mixBlendMode: "multiply" }} />
           <span className="logo-text">Mimi Mail</span>
         </div>
         <div className="nav-links">
           <button 
-            onClick={() => router.push("/")} 
+            onClick={() => router.push("/?mode=register")} 
             className="retro-btn btn-white"
             style={{ padding: "5px 12px", fontSize: "12px" }}
           >
