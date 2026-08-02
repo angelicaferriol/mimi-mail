@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS users (
   reset_pin TEXT,
   reset_pin_created_at TIMESTAMP,
   reset_pin_attempts INTEGER DEFAULT 0,
+  theme TEXT DEFAULT 'theme-peach',
+  dark_mode INTEGER DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

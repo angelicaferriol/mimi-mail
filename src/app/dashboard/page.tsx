@@ -15,6 +15,7 @@ interface MessageRow {
 interface UserRow {
   display_name: string | null;
   bio: string | null;
+  theme: string | null;
 }
 
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,7 @@ export default async function DashboardPage() {
 
   // Fetch user settings
   const user = await db.get<UserRow>(
-    'SELECT display_name, bio FROM users WHERE id = ?',
+    'SELECT display_name, bio, theme FROM users WHERE id = ?',
     session.userId
   );
 
@@ -57,6 +58,7 @@ export default async function DashboardPage() {
       initialMessages={serializedMessages} 
       initialDisplayName={user?.display_name || ''}
       initialBio={user?.bio || ''}
+      initialTheme={user?.theme || 'theme-peach'}
     />
   );
 }

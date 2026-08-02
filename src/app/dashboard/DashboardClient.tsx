@@ -17,13 +17,15 @@ interface DashboardClientProps {
   initialMessages: Message[];
   initialDisplayName: string;
   initialBio: string;
+  initialTheme: string;
 }
 
 export default function DashboardClient({ 
   username, 
   initialMessages, 
   initialDisplayName, 
-  initialBio 
+  initialBio,
+  initialTheme
 }: DashboardClientProps) {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -35,7 +37,7 @@ export default function DashboardClient({
   const [mounted, setMounted] = useState(false);
   
   // Theme state
-  const [theme, setTheme] = useState("theme-peach");
+  const [theme, setTheme] = useState(initialTheme);
 
   // Profile states
   const [displayName, setDisplayName] = useState(initialDisplayName);
@@ -68,9 +70,8 @@ export default function DashboardClient({
 
   // Load and sync theme on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem("mimi-theme") || "theme-peach";
-    document.body.className = savedTheme;
-    const themeTimer = window.setTimeout(() => setTheme(savedTheme), 0);
+    document.body.className = initialTheme;
+    setTheme(initialTheme);
 
     // Show tutorial if not dismissed
     const dismissed = localStorage.getItem("mimi_tutorial_dismissed");
@@ -83,20 +84,29 @@ export default function DashboardClient({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     return () => {
-      window.clearTimeout(themeTimer);
       window.clearTimeout(tutorialTimer);
     };
-  }, []);
+  }, [initialTheme]);
 
   const dismissTutorial = () => {
     setShowTutorial(false);
     localStorage.setItem("mimi_tutorial_dismissed", "true");
   };
 
-  const changeTheme = (newTheme: string) => {
+  const changeTheme = async (newTheme: string) => {
     setTheme(newTheme);
-    localStorage.setItem("mimi-theme", newTheme);
     document.body.className = newTheme;
+    
+    // Persist color theme choice in user settings database
+    try {
+      await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName: initialDisplayName, bio: initialBio, theme: newTheme }),
+      });
+    } catch (e) {
+      console.error("Failed to persist theme in database:", e);
+    }
   };
 
   const [sharingLink, setSharingLink] = useState("");
@@ -271,7 +281,7 @@ export default function DashboardClient({
       </header>
 
       <div style={{ width: "100%", maxWidth: "600px", display: "flex", flexDirection: "column", gap: "20px" }}>
-        {!showSettings && (showTutorial || messages.length === 0) && (
+        {!showSettings && showTutorial && (
           <div style={{ 
             border: "1.5px dashed var(--border-color)", 
             borderRadius: "12px", 

@@ -14,13 +14,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { displayName, bio } = await request.json();
+    const { displayName, bio, theme } = await request.json();
 
     // Update profile fields
     await db.run(
-      'UPDATE users SET display_name = ?, bio = ? WHERE id = ?',
+      'UPDATE users SET display_name = ?, bio = ?, theme = ? WHERE id = ?',
       displayName ? displayName.trim() : null,
       bio ? bio.trim() : null,
+      theme ? theme.trim() : 'theme-peach',
       session.userId
     );
 

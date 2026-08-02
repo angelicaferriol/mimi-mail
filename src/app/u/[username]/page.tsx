@@ -14,8 +14,8 @@ export default async function ProfilePage({ params }: PageProps) {
   const cleanUsername = username.toLowerCase();
 
   // Find user in database
-  const user = await db.get<{ id: number; username: string; display_name: string | null; bio: string | null }>(
-    'SELECT id, username, display_name, bio FROM users WHERE username = ?',
+  const user = await db.get<{ id: number; username: string; display_name: string | null; bio: string | null; theme: string | null }>(
+    'SELECT id, username, display_name, bio, theme FROM users WHERE username = ?',
     cleanUsername
   );
 
@@ -65,6 +65,7 @@ export default async function ProfilePage({ params }: PageProps) {
       initialAnswers={serializedAnswers} 
       displayName={user.display_name || ''}
       bio={user.bio || ''}
+      initialTheme={user.theme || 'theme-peach'}
     />
   );
 }

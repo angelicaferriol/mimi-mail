@@ -16,13 +16,15 @@ interface ProfileClientProps {
   initialAnswers: AnsweredMessage[];
   displayName?: string;
   bio?: string;
+  initialTheme?: string;
 }
 
 export default function ProfileClient({ 
   username, 
   initialAnswers, 
   displayName, 
-  bio 
+  bio,
+  initialTheme = 'theme-peach'
 }: ProfileClientProps) {
   const router = useRouter();
   const [messageText, setMessageText] = useState("");
@@ -35,10 +37,8 @@ export default function ProfileClient({
 
   // Load theme on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem("mimi-theme") || "theme-peach";
-    const savedDark = localStorage.getItem("mimi-dark") === "true";
-    document.body.className = `${savedTheme} ${savedDark ? "dark-mode" : ""}`;
-  }, []);
+    document.body.className = initialTheme;
+  }, [initialTheme]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
